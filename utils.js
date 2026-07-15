@@ -25,16 +25,39 @@ export const drawSymmetryElements = (ctx, groupId, OFFSET_X, OFFSET_Y, CELL_SIZE
 	const config = SymmetryConfig[groupId];
 	if (!config) return;
 
+	// ★ 六角格子判定と、単位ベクトルの長さを計算
+	const isHexagonal = config.system === 'hexagonal';
+	const L = CELL_SIZE;
+	const H_tri = (L * Math.sqrt(3)) / 2;
+
+	// ★ 座標 (u, v) を直交座標 (x, y) に変換するヘルパー関数
+	const getPos = (u, v) => {
+		if (isHexagonal) {
+			// 六角格子の場合：uを水平方向、vを斜め60度方向のベクトルとして直交座標に変換
+			return {
+				x: OFFSET_X + u * L + v * (L / 2),
+				y: OFFSET_Y + v * H_tri,
+			};
+		} else {
+			// 直交格子の場合（既存ロジック）
+			return {
+				x: OFFSET_X + u * CELL_SIZE,
+				y: OFFSET_Y + v * CELL_SIZE,
+			};
+		}
+	};
+
 	// 対称面 (線) の描画
-	config.lines.forEach(([x1, y1, x2, y2, type, vis]) => {
+	config.lines.forEach(([u1, v1, u2, v2, type, vis]) => {
 		const isMirrorHint = type === 'm' && hints.mirror;
 		const isGlideHint = type === 'g' && hints.glide;
-
-		// ★ 「初期表示要素 (i)」 かつ 「問題を表示」がオンの場合に描画を許可
 		const isInitialVisible = vis === 'i' && hints.showProblem;
 
-		// 条件を結合
 		if (isInitialVisible || (vis === 'h' && (isMirrorHint || isGlideHint))) {
+			// ヘルパー関数で始点と終点を計算
+			const p1 = getPos(u1, v1);
+			const p2 = getPos(u2, v2);
+
 			ctx.beginPath();
 			ctx.strokeStyle = 'red';
 			if (type === 'm') {
@@ -44,23 +67,24 @@ export const drawSymmetryElements = (ctx, groupId, OFFSET_X, OFFSET_Y, CELL_SIZE
 				ctx.lineWidth = 3;
 				ctx.setLineDash(CELL_SIZE === 200 ? [6, 6] : [8, 8]);
 			}
-			ctx.moveTo(OFFSET_X + x1 * CELL_SIZE, OFFSET_Y + y1 * CELL_SIZE);
-			ctx.lineTo(OFFSET_X + x2 * CELL_SIZE, OFFSET_Y + y2 * CELL_SIZE);
+			ctx.moveTo(p1.x, p1.y);
+			ctx.lineTo(p2.x, p2.y);
 			ctx.stroke();
 			ctx.setLineDash([]);
 		}
 	});
 
 	// 回転対称軸の描画
-	config.rotations.forEach(([x, y, n, vis]) => {
+	config.rotations.forEach(([u, v, n, vis]) => {
 		const isRotationHint = hints.rotation;
-
-		// ★ 同様に、「初期表示要素 (i)」 かつ 「問題を表示」がオンの場合に描画を許可
 		const isInitialVisible = vis === 'i' && hints.showProblem;
 
 		if (isInitialVisible || (vis === 'h' && isRotationHint)) {
-			const cx = OFFSET_X + x * CELL_SIZE;
-			const cy = OFFSET_Y + y * CELL_SIZE;
+			// ヘルパー関数で中心座標を計算
+			const p = getPos(u, v);
+			const cx = p.x;
+			const cy = p.y;
+
 			ctx.fillStyle = 'red';
 			ctx.beginPath();
 			const r = 17; // 4回回転以上の基準サイズ(約24pxの半分)

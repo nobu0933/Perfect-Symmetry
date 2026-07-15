@@ -1,14 +1,25 @@
+// ==========================================
+// shapes.js
+// 図形と色の定義データ
+// ==========================================
 // shapes.js
 
-// 図形の色バリエーション（紫と濃い黄色っぽいオレンジを追加）
-export const SHAPE_COLORS = [
-	'#333333', // 黒
-	'#0056b3', // 青
-	'#28a745', // 緑
-	'#800080', // 紫
-	'#d97706', // 濃い黄色っぽいオレンジ
-];
+// 図形の定義
+export const SHAPES = {
+	triangle: { id: 'triangle', nameJa: '直角三角形' },
+	six: { id: 'six', nameJa: '数字の6' },
+	l_shape: { id: 'l_shape', nameJa: 'L字型' },
+	f_shape: { id: 'f_shape', nameJa: 'Fの字' },
+};
 
+// 色の定義（カラーコードのみを管理）
+export const SHAPE_COLORS = [
+	{ value: '#333333' }, // 黒
+	{ value: '#0056b3' }, // 青
+	{ value: '#28a745' }, // 緑
+	{ value: '#800080' }, // 紫
+	{ value: '#d97706' }, // オレンジ
+];
 // 図形のパス描画定義（原点が視覚的中心になるようにオフセットを計算して描画する）
 export const ShapeDefs = {
 	triangle: {

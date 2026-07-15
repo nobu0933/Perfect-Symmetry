@@ -7,119 +7,398 @@
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
-		<div id="game-container">
-			<h1>perfect symmetry</h1>
+		<!-- 全体を囲むコンテナ -->
+		<div id="app-container">
+			<!-- ==================== フロント画面 ==================== -->
+			<div id="view-front" class="view-section">
+				<div class="title-area">
+					<h1>Perfect Symmetry <span class="version-text">beta 1.3</span></h1>
+					<p>平面群を作るゲーム</p>
+				</div>
 
-			<div class="group-selector">
-				<label for="group-select">平面群:</label>
-				<!-- 中身は main.js で自動生成します -->
-				<select id="group-select"></select>
+				<div class="tutorial-btn-area">
+					<button class="icon-btn" onclick="openTutorial()">
+						<span class="circle-icon">?</span> 遊び方
+					</button>
+				</div>
+
+				<!-- 2×2のゲームモード選択エリア -->
+				<div class="menu-grid game-modes">
+					<button onclick="startGame('easy')">
+						<span class="mode-title">イージー</span>
+						<span class="mode-desc">基本の平面群を練習します</span>
+					</button>
+					<button onclick="startGame('hard')">
+						<span class="mode-title">ハード</span>
+						<span class="mode-desc">より複雑な平面群に挑戦します</span>
+					</button>
+					<button onclick="startGame('timeattack')">
+						<span class="mode-title">タイムアタック</span>
+						<span class="mode-desc">制限時間内にどれだけ解けるか競います</span>
+					</button>
+					<!-- ブラインドとギャラリーを入れ替えました -->
+					<button onclick="openGallery()">
+						<span class="mode-title">ギャラリー</span>
+						<span class="mode-desc">保存した過去の作品を鑑賞します</span>
+					</button>
+				</div>
+
+				<hr class="spacer-line" />
+
+				<!-- その他のメニューエリア -->
+				<div class="menu-grid other-modes">
+					<!-- ブラインドモードをこちらに移動 -->
+					<button onclick="startGame('blind')">ブラインドモード</button>
+					<button onclick="startGame('debug')" style="background-color: #6c757d">
+						デバッグモード
+					</button>
+				</div>
 			</div>
 
-			<div class="main-content">
-				<!-- 左側：格子エリアとヒント枠の縦並びグループ -->
-				<div style="display: flex; flex-direction: column; width: 600px">
-					<!-- 格子エリア -->
-					<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 20px"></canvas>
+			<!-- ==================== ゲーム画面 ==================== -->
+			<div id="view-game" class="view-section" style="display: none">
+				<!-- ゲーム画面上部ヘッダー -->
+				<div class="game-header">
+					<button onclick="returnToFront()">フロント画面にもどる</button>
+					<button class="icon-btn" onclick="openTutorial()">
+						<span class="circle-icon">?</span>
+					</button>
+				</div>
+				<!-- ▽▽▽ デバッグモード専用のUI ▽▽▽ -->
+				<div id="debug-panel" style="display: none">
+					<div class="debug-title">デバッグツール</div>
 
-					<div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch">
-						<!-- 「問題を表示」の独立した枠 -->
+					<!-- ★ 左右2カラム構造：左にプルダウン、右にトグル -->
+					<div
+						style="
+							display: flex;
+							flex-wrap: wrap;
+							gap: 20px;
+							align-items: flex-start;
+							margin-bottom: 10px;
+						"
+					>
+						<!-- 【左カラム】プルダウン群 -->
 						<div
-							style="
-								border: 1px solid #ccc;
-								border-radius: 4px;
-								padding: 10px;
-								background: #fff;
-								display: flex;
-								flex-direction: column;
-								align-items: center;
-								justify-content: center;
-								min-width: 100px;
-							"
+							style="flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 10px"
 						>
-							<div
-								style="
-									font-weight: bold;
-									margin-bottom: 8px;
-									border-bottom: 1px solid #eee;
-									width: 100%;
-									text-align: center;
-									padding-bottom: 4px;
-									color: #555;
-								"
-							>
-								問題を表示
+							<!-- 平面群のプルダウン -->
+							<div style="display: flex; flex-direction: column; gap: 3px">
+								<span style="font-weight: bold; font-size: 12px; color: #555">平面群の選択</span>
+								<select
+									id="group-select"
+									class="form-control"
+									style="
+										width: 100%;
+										height: 32px;
+										border: 1px solid #ccc;
+										border-radius: 4px;
+										padding: 4px;
+									"
+								></select>
 							</div>
-							<label style="cursor: pointer"
-								><input type="checkbox" id="show-problem-toggle" checked /> 表示</label
-							>
+
+							<!-- 図形と色のプルダウン（横並び） -->
+							<div style="display: flex; gap: 10px">
+								<!-- 図形 -->
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+									<span style="font-weight: bold; font-size: 12px; color: #555">図形</span>
+									<select
+										id="debug-shape-select"
+										class="form-control"
+										style="
+											width: 100%;
+											height: 32px;
+											border: 1px solid #ccc;
+											border-radius: 4px;
+											padding: 4px;
+										"
+									></select>
+								</div>
+								<!-- 色 -->
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+									<span style="font-weight: bold; font-size: 12px; color: #555">色</span>
+									<div
+										id="debug-color-picker"
+										class="custom-color-picker"
+										style="position: relative; width: 100%"
+									>
+										<!-- 現在選択されている色を表示するボタン -->
+										<button
+											type="button"
+											id="color-picker-trigger"
+											class="color-picker-trigger"
+											style="
+												width: 100%;
+												height: 32px;
+												border: 1px solid #ccc;
+												border-radius: 4px;
+												cursor: pointer;
+											"
+										></button>
+										<!-- 色の選択肢一覧リスト -->
+										<div
+											id="color-picker-options"
+											class="color-picker-options"
+											style="
+												display: none;
+												position: absolute;
+												top: 100%;
+												left: 0;
+												z-index: 10;
+												background: #fff;
+												border: 1px solid #ccc;
+												width: 100%;
+											"
+										></div>
+									</div>
+									<!-- もともとのJSとの互換性のために、非表示のselectを裏側に残しておきます -->
+									<select id="debug-color-select" style="display: none"></select>
+								</div>
+							</div>
 						</div>
 
-						<!-- 「ヒントを表示」の独立した枠 -->
+						<!-- 【右カラム】トグル群（縦一列に整列） -->
 						<div
 							style="
-								border: 1px solid #ccc;
-								border-radius: 4px;
-								padding: 10px;
-								background: #fff;
-								flex-grow: 1;
+								display: flex;
+								flex-direction: column;
+								gap: 12px;
+								min-width: 220px;
+								padding-top: 15px;
 							"
 						>
-							<div
-								style="
-									font-weight: bold;
-									margin-bottom: 8px;
-									border-bottom: 1px solid #eee;
-									padding-bottom: 4px;
-									color: #555;
-									text-align: center;
-								"
+							<!-- ランダムな平面群トグル -->
+							<label
+								class="toggle-switch"
+								style="display: inline-flex; align-items: center; margin: 0"
 							>
-								ヒントを表示
+								<input type="checkbox" id="random-group-toggle" />
+								<span class="toggle-slider"></span>
+								<span class="toggle-label" style="font-weight: bold">ランダムな平面群</span>
+							</label>
+
+							<!-- 自分で初期配置を決めるトグル -->
+							<label
+								class="toggle-switch"
+								id="manual-init-label"
+								style="display: inline-flex; align-items: center; margin: 0"
+							>
+								<input type="checkbox" id="manual-init-toggle" />
+								<span class="toggle-slider"></span>
+								<span class="toggle-label" style="font-weight: bold">自分で初期配置を決める</span>
+							</label>
+						</div>
+					</div>
+
+					<!-- ヒント用のテキスト（チェックが入ったときなどに表示されます） -->
+					<div
+						id="manual-init-hint"
+						style="
+							display: none;
+							font-size: 11px;
+							color: #721c24;
+							margin-bottom: 10px;
+							padding-left: 5px;
+						"
+					>
+						※ ホイールでサイズ変更、左クリックで配置してゲーム開始
+					</div>
+
+					<!-- デバッグ用カウンターエリア（新規追加） -->
+					<div
+						id="debug-counter-area"
+						style="
+							margin-top: 10px;
+							border-top: 1px solid #f5c6cb;
+							padding-top: 10px;
+							font-size: 13px;
+						"
+					>
+						<div style="font-weight: bold; margin-bottom: 5px">【リアルタイム情報】</div>
+						<div>
+							配置した図形数（単位格子内換算）:
+							<span id="debug-placed-count" style="font-weight: bold">0</span> 個
+						</div>
+
+						<div style="font-weight: bold; margin-top: 10px; margin-bottom: 5px">
+							【直近の採点減点内訳】
+						</div>
+						<div>・配置漏れ（0点扱い）: <span id="debug-penalty-missing">0</span> 箇所</div>
+						<div>・余分な配置による減点: <span id="debug-penalty-extra">0</span> 点</div>
+						<div>・位置ズレによる減点: <span id="debug-penalty-position">0</span> 点</div>
+						<div>・向き/反転間違いによる減点: <span id="debug-penalty-transform">0</span> 点</div>
+					</div>
+				</div>
+				<!-- △△△ デバッグモード専用のUI △△△ -->
+				<!-- ゲームエリア（CanvasやヒントUIなど） -->
+				<div id="game-workspace">
+					<div class="main-content">
+						<!-- 左側：格子エリアとヒント枠の縦並びグループ -->
+						<div style="display: flex; flex-direction: column; width: 600px">
+							<!-- 格子エリア -->
+							<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 20px"></canvas>
+
+							<div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch">
+								<!-- 「問題を表示」の独立した枠 -->
+								<div
+									style="
+										border: 1px solid #ccc;
+										border-radius: 4px;
+										padding: 10px;
+										background: #fff;
+										display: flex;
+										flex-direction: column;
+										align-items: center;
+										justify-content: center;
+										min-width: 100px;
+									"
+								>
+									<div
+										style="
+											font-weight: bold;
+											margin-bottom: 8px;
+											border-bottom: 1px solid #eee;
+											width: 100%;
+											text-align: center;
+											padding-bottom: 4px;
+											color: #555;
+										"
+									>
+										問題を表示
+									</div>
+									<label style="cursor: pointer"
+										><input type="checkbox" id="show-problem-toggle" checked /> 表示</label
+									>
+								</div>
+
+								<!-- 「ヒントを表示」の独立した枠 -->
+								<div
+									style="
+										border: 1px solid #ccc;
+										border-radius: 4px;
+										padding: 10px;
+										background: #fff;
+										flex-grow: 1;
+									"
+								>
+									<div
+										style="
+											font-weight: bold;
+											margin-bottom: 8px;
+											border-bottom: 1px solid #eee;
+											padding-bottom: 4px;
+											color: #555;
+											text-align: center;
+										"
+									>
+										ヒントを表示
+									</div>
+									<div style="display: flex; gap: 15px; justify-content: center; padding-top: 2px">
+										<label style="cursor: pointer"
+											><input type="checkbox" id="hint-rotation" /> 回転軸</label
+										>
+										<label style="cursor: pointer"
+											><input type="checkbox" id="hint-mirror" /> 鏡映面</label
+										>
+										<label style="cursor: pointer"
+											><input type="checkbox" id="hint-glide" /> 映進面</label
+										>
+									</div>
+								</div>
 							</div>
-							<div style="display: flex; gap: 15px; justify-content: center; padding-top: 2px">
-								<label style="cursor: pointer"
-									><input type="checkbox" id="hint-rotation" /> 回転軸</label
+						</div>
+
+						<!-- 右側：サイドパネル -->
+						<div class="side-panel">
+							<div class="controls-grid">
+								<button id="flip-btn">反転 (M)</button>
+								<button id="reset-btn">配置リセット (R)</button>
+								<button id="score-btn">採点する</button>
+							</div>
+
+							<!-- 採点結果エリア -->
+							<div id="result-area" style="display: none; margin-top: 20px">
+								<h2 id="score-display"></h2>
+								<p id="advice-display"></p>
+
+								<!-- 模範解答表示用キャンバス -->
+								<div class="answer-box">
+									<div class="answer-title">解答</div>
+									<canvas id="answerCanvas" width="240" height="240"></canvas>
+
+									<label class="toggle-switch" style="margin-top: 15px; margin-bottom: 5px">
+										<input type="checkbox" id="show-user-answer-toggle" />
+										<span class="toggle-slider"></span>
+										<span class="toggle-label">自分の回答を表示</span>
+									</label>
+								</div>
+
+								<!-- ギャラリー保存用ボタン -->
+								<button
+									id="save-gallery-btn"
+									onclick="saveToGallery()"
+									style="margin-top: 10px; width: 100%"
 								>
-								<label style="cursor: pointer"
-									><input type="checkbox" id="hint-mirror" /> 鏡映面</label
+									ギャラリーに保存
+								</button>
+								<button id="next-btn" style="margin-top: 10px">次の問題</button>
+
+								<!-- デバッグ時専用：減点詳細表示エリア -->
+								<div
+									id="debug-deduction-details"
+									style="display: none; margin-top: 10px; color: #d9534f; font-size: 0.9em"
 								>
-								<label style="cursor: pointer"
-									><input type="checkbox" id="hint-glide" /> 映進面</label
-								>
+									<!-- JSから減点内容が挿入されます -->
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+			</div>
 
-				<!-- 右側：サイドパネル -->
-				<div class="side-panel">
-					<div class="controls-grid">
-						<button id="flip-btn">反転 (M)</button>
-						<!-- Rキーに変更 -->
-						<button id="reset-btn">配置リセット (R)</button>
-						<!-- Enterキーを明記 -->
-						<button id="score-btn">採点する</button>
-					</div>
+			<!-- ==================== ギャラリー画面 ==================== -->
+			<div id="view-gallery" class="view-section" style="display: none">
+				<div class="game-header">
+					<button onclick="returnToFront()">フロント画面にもどる</button>
+					<h2>ギャラリー (最大10件)</h2>
+				</div>
+				<div id="gallery-container">
+					<p style="text-align: center; color: #666">まだ保存された作品はありません。</p>
+				</div>
+			</div>
+		</div>
 
-					<div id="result-area">
-						<div id="score-display"></div>
-						<div id="advice-display"></div>
+		<!-- チュートリアル・オーバーレイ（疑似ポップアップ） -->
+		<div id="tutorial-modal" class="tutorial-overlay" style="display: none">
+			<div class="tutorial-content">
+				<!-- 右上の閉じる(×)ボタン -->
+				<button class="close-x-btn" onclick="closeTutorial()">×</button>
 
-						<div class="answer-box">
-							<div class="answer-title">解答</div>
-							<canvas id="answerCanvas" width="240" height="240"></canvas>
+				<h2>遊び方</h2>
+				<div class="tutorial-body">
+					<p>ここにチュートリアルの文章や画像が入ります。</p>
+					<ul>
+						<li>基本操作：キャンバス上に図形を配置します。</li>
+						<li>反転：Mキーまたは反転ボタンで図形を裏返します。</li>
+						<li>採点：条件を満たしたと思ったら「採点する」を押してください。</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<!-- 戻る確認・オーバーレイ（疑似ポップアップ） -->
+		<div id="return-confirm-modal" class="tutorial-overlay" style="display: none">
+			<div class="tutorial-content" style="max-width: 400px; text-align: center">
+				<!-- 右上の閉じる(×)ボタン -->
+				<button class="close-x-btn" onclick="closeReturnConfirm()">×</button>
 
-							<!-- キャンバスの下に移動 -->
-							<label class="toggle-switch" style="margin-top: 15px; margin-bottom: 5px">
-								<input type="checkbox" id="show-user-answer-toggle" />
-								<span class="toggle-slider"></span>
-								<span class="toggle-label">自分の回答を表示</span>
-							</label>
-						</div>
+				<h2 style="border-bottom: none; margin-bottom: 10px">確認</h2>
+				<div class="tutorial-body">
+					<p>ゲームを中断してフロント画面に戻ってもよろしいですか？</p>
 
-						<!-- 新規追加: 次の問題ボタン (初期は非表示) -->
-						<button id="next-btn" style="display: none">次の問題</button>
+					<div class="confirm-btn-group">
+						<button class="confirm-btn-yes" onclick="confirmReturnToFront()">はい</button>
+						<button class="confirm-btn-no" onclick="closeReturnConfirm()">いいえ</button>
 					</div>
 				</div>
 			</div>
