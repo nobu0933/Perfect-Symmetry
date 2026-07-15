@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>perfect symmetry</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<div id="game-container">
+			<h1>perfect symmetry</h1>
+
+			<div class="group-selector">
+				<label for="group-select">平面群:</label>
+				<!-- 中身は main.js で自動生成します -->
+				<select id="group-select"></select>
+			</div>
+
+			<div class="main-content">
+				<!-- 左側：格子エリアとヒント枠の縦並びグループ -->
+				<div style="display: flex; flex-direction: column; width: 600px">
+					<!-- 格子エリア -->
+					<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 20px"></canvas>
+
+					<div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch">
+						<!-- 「問題を表示」の独立した枠 -->
+						<div
+							style="
+								border: 1px solid #ccc;
+								border-radius: 4px;
+								padding: 10px;
+								background: #fff;
+								display: flex;
+								flex-direction: column;
+								align-items: center;
+								justify-content: center;
+								min-width: 100px;
+							"
+						>
+							<div
+								style="
+									font-weight: bold;
+									margin-bottom: 8px;
+									border-bottom: 1px solid #eee;
+									width: 100%;
+									text-align: center;
+									padding-bottom: 4px;
+									color: #555;
+								"
+							>
+								問題を表示
+							</div>
+							<label style="cursor: pointer"
+								><input type="checkbox" id="show-problem-toggle" checked /> 表示</label
+							>
+						</div>
+
+						<!-- 「ヒントを表示」の独立した枠 -->
+						<div
+							style="
+								border: 1px solid #ccc;
+								border-radius: 4px;
+								padding: 10px;
+								background: #fff;
+								flex-grow: 1;
+							"
+						>
+							<div
+								style="
+									font-weight: bold;
+									margin-bottom: 8px;
+									border-bottom: 1px solid #eee;
+									padding-bottom: 4px;
+									color: #555;
+									text-align: center;
+								"
+							>
+								ヒントを表示
+							</div>
+							<div style="display: flex; gap: 15px; justify-content: center; padding-top: 2px">
+								<label style="cursor: pointer"
+									><input type="checkbox" id="hint-rotation" /> 回転軸</label
+								>
+								<label style="cursor: pointer"
+									><input type="checkbox" id="hint-mirror" /> 鏡映面</label
+								>
+								<label style="cursor: pointer"
+									><input type="checkbox" id="hint-glide" /> 映進面</label
+								>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 右側：サイドパネル -->
+				<div class="side-panel">
+					<div class="controls-grid">
+						<button id="flip-btn">反転 (M)</button>
+						<!-- Rキーに変更 -->
+						<button id="reset-btn">配置リセット (R)</button>
+						<!-- Enterキーを明記 -->
+						<button id="score-btn">採点する</button>
+					</div>
+
+					<div id="result-area">
+						<div id="score-display"></div>
+						<div id="advice-display"></div>
+
+						<div class="answer-box">
+							<div class="answer-title">解答</div>
+							<canvas id="answerCanvas" width="240" height="240"></canvas>
+
+							<!-- キャンバスの下に移動 -->
+							<label class="toggle-switch" style="margin-top: 15px; margin-bottom: 5px">
+								<input type="checkbox" id="show-user-answer-toggle" />
+								<span class="toggle-slider"></span>
+								<span class="toggle-label">自分の回答を表示</span>
+							</label>
+						</div>
+
+						<!-- 新規追加: 次の問題ボタン (初期は非表示) -->
+						<button id="next-btn" style="display: none">次の問題</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script type="module" src="main.js"></script>
+	</body>
+</html>

@@ -1,0 +1,228 @@
+body {
+	font-family: 'Helvetica Neue', Arial, sans-serif;
+	background-color: #f0f2f5;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 20px;
+	margin: 0;
+}
+h1 {
+	margin-bottom: 5px;
+	color: #333;
+}
+#game-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background: white;
+	padding: 20px;
+	border-radius: 12px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.group-selector {
+	margin-bottom: 15px;
+	font-size: 18px;
+	font-weight: bold;
+	color: #333;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+#group-select {
+	font-size: 16px;
+	padding: 6px 12px;
+	border: 2px solid #ccc;
+	border-radius: 6px;
+	background-color: white;
+	cursor: pointer;
+	font-family: inherit;
+	outline: none;
+}
+#group-select:focus {
+	border-color: #007bff;
+}
+
+.main-content {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 25px;
+}
+canvas#gameCanvas {
+	border: 2px solid #333;
+	background-color: #fafafa;
+	cursor: none;
+}
+.side-panel {
+	display: flex;
+	flex-direction: column;
+	width: 250px;
+}
+.controls-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+button {
+	padding: 10px;
+	font-size: 14px;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	background-color: #007bff;
+	color: white;
+	transition: 0.2s;
+}
+button:hover {
+	background-color: #0056b3;
+}
+#score-btn {
+	grid-column: 1 / span 2;
+	background-color: #28a745;
+	font-size: 16px;
+	font-weight: bold;
+}
+#score-btn:hover {
+	background-color: #218838;
+}
+
+#result-area {
+	display: none;
+	margin-top: 25px;
+	padding-top: 15px;
+	border-top: 2px dashed #ccc;
+}
+#score-display {
+	font-size: 24px;
+	font-weight: bold;
+}
+#advice-display {
+	margin-top: 8px;
+	font-size: 14px;
+	color: #555;
+	line-height: 1.4;
+}
+
+/* --- 変更・追加部分 --- */
+.answer-box {
+	margin-top: 20px;
+	padding: 15px 10px;
+	border: 1px solid #e0e0e0; /* 薄い枠線 */
+	border-radius: 10px; /* 角丸 */
+	background-color: #fafafa;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.answer-title {
+	margin-bottom: 5px;
+	font-weight: bold;
+	color: #555;
+	font-size: 15px;
+	text-align: center;
+}
+canvas#answerCanvas {
+	display: block;
+	background-color: transparent; /* 背景になじませる */
+}
+
+/* トグルスイッチのスタイル */
+.toggle-switch {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+	cursor: pointer;
+	font-size: 13px;
+	color: #555;
+	user-select: none;
+}
+.toggle-switch input {
+	display: none; /* デフォルトのチェックボックスを隠す */
+}
+.toggle-slider {
+	position: relative;
+	width: 36px;
+	height: 20px;
+	background-color: #ccc;
+	border-radius: 20px;
+	margin-right: 8px;
+	transition: 0.3s;
+}
+.toggle-slider::before {
+	content: '';
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background-color: white;
+	top: 2px;
+	left: 2px;
+	transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider {
+	background-color: #007bff;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+	transform: translateX(16px);
+}
+
+/* --- 無効化(disabled)されたボタンのスタイル --- */
+button:disabled {
+	background-color: #b0c4de !important;
+	color: #f0f0f0;
+	/* cursor: not-allowed; を削除し、通常のカーソルに戻す */
+	cursor: default;
+	transform: none;
+}
+
+/* --- 次の問題ボタンのスタイル --- */
+#next-btn {
+	margin-top: 15px;
+	width: 100%;
+	background-color: #17a2b8;
+	font-size: 16px;
+	font-weight: bold;
+}
+#next-btn:hover:not(:disabled) {
+	background-color: #138496;
+}
+
+/* トグルスイッチ周辺の微調整 */
+.toggle-switch {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	font-size: 13px;
+	color: #555;
+	user-select: none;
+}
+.toggle-switch input {
+	display: none;
+}
+.toggle-slider {
+	position: relative;
+	width: 36px;
+	height: 20px;
+	background-color: #ccc;
+	border-radius: 20px;
+	margin-right: 8px;
+	transition: 0.3s;
+}
+.toggle-slider::before {
+	content: '';
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background-color: white;
+	top: 2px;
+	left: 2px;
+	transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider {
+	background-color: #007bff;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+	transform: translateX(16px);
+}
