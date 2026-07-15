@@ -1,6 +1,8 @@
 // main.js
 import { SymmetryGroups } from './symmetryGroups.js';
 import { SymmetryConfig } from './symmetryConfig.js';
+// ★ shapes.js から図形データをインポート
+import { ShapeDefs, SHAPE_TYPES, SHAPE_COLORS } from './shapes.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -17,9 +19,7 @@ let placedShapes = [];
 let isScored = false;
 
 // --- ランダム生成用の設定 ---
-const INITIAL_ANGLE_STEP = 90; // 向きの刻み幅（後で変更しやすいように変数化）
-const SHAPE_COLORS = ['#333333', '#0056b3', '#28a745']; // 黒, 青, 緑
-const SHAPE_TYPES = ['triangle', 'six']; // 図形の種類（直角三角形, 数字の6）
+const INITIAL_ANGLE_STEP = 90; // 向きの刻み幅
 const MIN_SIZE = 30; // 現状程度のサイズ（下限）
 const MAX_SIZE = CELL_SIZE / 2; // 単位格子の半分の正方形（上限）
 
@@ -132,7 +132,6 @@ function getCorrectShapes() {
 	return [{ ...p0 }];
 }
 
-// drawTriangle の代わりにこれを追加します
 function drawShape(context, x, y, angle, flipped, type, size, color, alpha = 1.0) {
 	context.save();
 	context.globalAlpha = alpha;
@@ -142,35 +141,9 @@ function drawShape(context, x, y, angle, flipped, type, size, color, alpha = 1.0
 
 	context.beginPath();
 
-	if (type === 'triangle') {
-		// 直角三角形 (元の 30x15 の比率を維持するよう size を基準に計算)
-		context.moveTo(0, 0);
-		context.lineTo(size, 0);
-		context.lineTo(0, size / 2);
-		context.closePath();
-	} else if (type === 'six') {
-		// 数字の「6」のような非対称な図形
-		const t = size * 0.25; // 線の太さ
-		const w = size * 0.8; // 幅
-		const h = size; // 高さ
-
-		// 外側の輪郭（時計回りで描画）
-		context.moveTo(0, 0);
-		context.lineTo(w, 0);
-		context.lineTo(w, t);
-		context.lineTo(t, t);
-		context.lineTo(t, h / 2);
-		context.lineTo(w, h / 2);
-		context.lineTo(w, h);
-		context.lineTo(0, h);
-		context.closePath();
-
-		// 内側の穴（反時計回りで描画して中をくり抜く）
-		context.moveTo(t, h / 2 + t);
-		context.lineTo(t, h - t);
-		context.lineTo(w - t, h - t);
-		context.lineTo(w - t, h / 2 + t);
-		context.closePath();
+	// ★ shapes.js に定義されている描画ロジックを呼び出す
+	if (ShapeDefs[type] && ShapeDefs[type].drawPath) {
+		ShapeDefs[type].drawPath(context, size);
 	}
 
 	context.fillStyle = color;
@@ -269,11 +242,10 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 canvas.addEventListener('click', (e) => {
-	// ★ 採点済みの場合は「問題を表示」をトグルする
+	// 採点済みの場合は「問題を表示」をトグルする
 	if (isScored) {
 		const toggle = document.getElementById('show-problem-toggle');
 		toggle.checked = !toggle.checked;
-		// 変更を反映するために再描画
 		draw();
 		drawModelAnswer();
 		return;
@@ -281,9 +253,10 @@ canvas.addEventListener('click', (e) => {
 
 	if (!isMouseInCanvas) return;
 
+	// ★ wrap関数を使わず、ユーザーがクリックした見た目通りの座標をそのまま保存する
 	placedShapes.push({
-		x: wrap(previewShape.x, OFFSET_X, CELL_SIZE),
-		y: wrap(previewShape.y, OFFSET_Y, CELL_SIZE),
+		x: previewShape.x,
+		y: previewShape.y,
 		angle: previewShape.angle,
 		flipped: previewShape.flipped,
 		isInitial: false,
@@ -360,7 +333,16 @@ function doScore() {
 
 				userPlaced.forEach((user, index) => {
 					if (usedUserIndices.has(index)) return; // 既に他のターゲットの正解として使われたものはスキップ
-					const dist = Math.sqrt(Math.pow(user.x - target.x, 2) + Math.pow(user.y - target.y, 2));
+
+					// ★ 周期境界を考慮した最短距離の計算
+					const diffX = Math.abs(user.x - target.x) % CELL_SIZE;
+					const minDx = Math.min(diffX, CELL_SIZE - diffX);
+
+					const diffY = Math.abs(user.y - target.y) % CELL_SIZE;
+					const minDy = Math.min(diffY, CELL_SIZE - diffY);
+
+					const dist = Math.sqrt(minDx * minDx + minDy * minDy);
+
 					if (dist < minDistance) {
 						minDistance = dist;
 						bestMatchIndex = index;
@@ -500,21 +482,39 @@ function drawModelAnswer() {
 
 	aCtx.strokeStyle = '#8c8c8c';
 	aCtx.lineWidth = 2;
-	aCtx.strokeRect(0, 0, 200, 200);
+	aCtx.strokeRect(0, 0, CELL_SIZE, CELL_SIZE);
 
-	// 解答描画にもヒント状態を渡す
 	const groupDef = SymmetryGroups[currentGroup];
 	if (groupDef && groupDef.drawModelAxes) {
 		groupDef.drawModelAxes(aCtx, getHints());
 	}
 
+	// ★ 座標を単位格子の中心(CELL_SIZE/2)に最も近い周期座標に変換する関数
+	const centerX = OFFSET_X + CELL_SIZE / 2;
+	const centerY = OFFSET_Y + CELL_SIZE / 2;
+	const getLocal = (val, center) => {
+		let diff = (val - center) % CELL_SIZE;
+		if (diff > CELL_SIZE / 2) diff -= CELL_SIZE;
+		if (diff < -CELL_SIZE / 2) diff += CELL_SIZE;
+		return center + diff - OFFSET_X;
+	};
+
+	// ★ 模範解答キャンバス内でも、境界を跨ぐはみ出し(周期性)を正確に描画する
+	const drawPeriodicInAnswer = (context, x, y, angle, flipped, type, size, color, alpha) => {
+		for (let gx = -CELL_SIZE; gx <= CELL_SIZE; gx += CELL_SIZE) {
+			for (let gy = -CELL_SIZE; gy <= CELL_SIZE; gy += CELL_SIZE) {
+				drawShape(context, x + gx, y + gy, angle, flipped, type, size, color, alpha);
+			}
+		}
+	};
+
 	const showUserAnswer = document.getElementById('show-user-answer-toggle').checked;
 	if (showUserAnswer) {
 		const userPlaced = placedShapes.filter((s) => !s.isInitial);
 		userPlaced.forEach((shape) => {
-			const localX = shape.x - OFFSET_X;
-			const localY = shape.y - OFFSET_Y;
-			drawShape(
+			const localX = getLocal(shape.x, centerX);
+			const localY = getLocal(shape.y, centerY);
+			drawPeriodicInAnswer(
 				aCtx,
 				localX,
 				localY,
@@ -530,9 +530,9 @@ function drawModelAnswer() {
 
 	const corrects = getCorrectShapes();
 	corrects.forEach((shape) => {
-		const localX = shape.x - OFFSET_X;
-		const localY = shape.y - OFFSET_Y;
-		drawShape(
+		const localX = getLocal(shape.x, centerX);
+		const localY = getLocal(shape.y, centerY);
+		drawPeriodicInAnswer(
 			aCtx,
 			localX,
 			localY,
