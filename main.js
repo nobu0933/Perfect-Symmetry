@@ -562,6 +562,15 @@ function resetPlacement() {
 	if (typeof resetUI === 'function') resetUI();
 	draw();
 	updateDebugCounters(); // ★これを追加（配置数と減点をリセット）
+
+	// ==========================================
+	// ★ ここを追加: 平面群の名前を画面に表示する
+	// ==========================================
+	const nameEl = document.getElementById('group-name-display');
+	if (nameEl && SymmetryGroups[currentGroup]) {
+		// symmetryGroups.js で定義されている名前を取得して表示
+		nameEl.textContent = SymmetryGroups[currentGroup].name;
+	}
 }
 
 // --- マウスホイールでのサイズ変更（新規追加） ---
@@ -1055,6 +1064,7 @@ window.startGame = function (mode) {
 			// デバッグモード起動時はオフ
 			randomToggle.checked = false;
 		} else if (['easy', 'hard', 'timeattack', 'blind'].includes(mode)) {
+			//[cite: 5]
 			// それ以外の通常プレイモード起動時は常にオン
 			randomToggle.checked = true;
 			// ★ 新規追加: 1問目のために、ここで強制的にランダムな平面群を抽選する
@@ -1069,13 +1079,30 @@ window.startGame = function (mode) {
 					groupSelect.value = randomGroup;
 				}
 			}
+
+			// ==========================================
+			// ★ 今回追加：以前の図形や色を引き継がないよう、新しく抽選し直す
+			// ==========================================
+			initialShape = generateRandomInitialShape();
+
+			// UI（デバッグ用パネルのセレクトボックスなど）の表示も同期させる
+			const shapeSelect = document.getElementById('debug-shape-select');
+			if (shapeSelect) shapeSelect.value = initialShape.type;
+
+			const colorSelect = document.getElementById('debug-color-select');
+			const pickerTrigger = document.getElementById('color-picker-trigger');
+			if (colorSelect && pickerTrigger) {
+				colorSelect.value = initialShape.color;
+				pickerTrigger.style.backgroundColor = initialShape.color;
+			}
+			// ==========================================
 		}
 	}
 
 	// 画面の表示切り替え
-	document.getElementById('view-front').style.display = 'none';
-	document.getElementById('view-gallery').style.display = 'none';
-	document.getElementById('view-game').style.display = 'block';
+	document.getElementById('view-front').style.display = 'none'; //[cite: 5]
+	document.getElementById('view-gallery').style.display = 'none'; //[cite: 5]
+	document.getElementById('view-game').style.display = 'block'; //[cite: 5]
 
 	// デバッグモード専用パネルの出し分け
 	const debugPanel = document.getElementById('debug-panel');
