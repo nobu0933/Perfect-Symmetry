@@ -37,9 +37,9 @@ export const ShapeDefs = {
 	six: {
 		drawPath: (context, size) => {
 			// 数字の「6」のような非対称な図形
-			const t = size * 0.25; // 線の太さ
-			const w = size * 0.8; // 幅
-			const h = size; // 高さ
+			const t = size * 0.15; // 線の太さ
+			const w = size * 0.6; // 幅
+			const h = size * 0.8; // 高さ
 
 			// バウンディングボックスの中心を原点に合わせる
 			const cx = -w / 2;

@@ -7,7 +7,8 @@ export const SymmetryGroups = {
 		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
 			return filterDuplicates([{ ...p0 }]);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p1', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p1', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p1', 0, 0, 200, hints),
 	},
 	p2: {
@@ -25,7 +26,8 @@ export const SymmetryGroups = {
 			});
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p2', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p2', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p2', 0, 0, 200, hints),
 	},
 	pm: {
@@ -41,7 +43,8 @@ export const SymmetryGroups = {
 			});
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'pm', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'pm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pm', 0, 0, 200, hints),
 	},
 	pg: {
@@ -57,7 +60,8 @@ export const SymmetryGroups = {
 			});
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'pg', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'pg', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pg', 0, 0, 200, hints),
 	},
 	cm: {
@@ -84,7 +88,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'cm', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'cm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'cm', 0, 0, 200, hints),
 	},
 	pmm: {
@@ -111,7 +116,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'pmm', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'pmm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pmm', 0, 0, 200, hints),
 	},
 	p2mg: {
@@ -141,7 +147,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p2mg', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p2mg', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p2mg', 0, 0, 200, hints),
 	},
 	pgg: {
@@ -168,7 +175,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'pgg', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'pgg', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pgg', 0, 0, 200, hints),
 	},
 	cmm: {
@@ -206,7 +214,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'cmm', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'cmm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'cmm', 0, 0, 200, hints),
 	},
 	p4: {
@@ -229,7 +238,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(corrects);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p4', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p4', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p4', 0, 0, 200, hints),
 	},
 	p4mm: {
@@ -263,7 +273,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p4mm', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p4mm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p4mm', 0, 0, 200, hints),
 	},
 	p4mg: {
@@ -297,7 +308,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p4mg', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p4mg', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p4mg', 0, 0, 200, hints),
 	},
 	p3: {
@@ -343,7 +355,8 @@ export const SymmetryGroups = {
 			}
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p3', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p3', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p3', 0, 0, 200, hints),
 	},
 	p3m1: {
@@ -401,7 +414,8 @@ export const SymmetryGroups = {
 
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p3m1', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p3m1', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p3m1', 0, 0, 200, hints),
 	},
 	p31m: {
@@ -453,7 +467,8 @@ export const SymmetryGroups = {
 
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p31m', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p31m', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p31m', 0, 0, 200, hints),
 	},
 	p6: {
@@ -492,7 +507,8 @@ export const SymmetryGroups = {
 
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p6', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p6', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p6', 0, 0, 200, hints),
 	},
 	p6mm: {
@@ -547,7 +563,8 @@ export const SymmetryGroups = {
 
 			return filterDuplicates(pts);
 		},
-		drawAxes: (ctx, OX, OY, CS, hints) => drawSymmetryElements(ctx, 'p6mm', OX, OY, CS, hints),
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'p6mm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p6mm', 0, 0, 200, hints),
 	},
 };

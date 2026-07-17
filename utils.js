@@ -1,7 +1,6 @@
 // utils.js
 import { SymmetryConfig } from './symmetryConfig.js';
 
-// 重複パターンを削除する関数 (浮動小数点誤差を考慮)
 export const filterDuplicates = (shapes) => {
 	const unique = [];
 	shapes.forEach((shape) => {
@@ -20,26 +19,32 @@ export const filterDuplicates = (shapes) => {
 	return unique;
 };
 
-// 共通の対称記号描画関数
-export const drawSymmetryElements = (ctx, groupId, OFFSET_X, OFFSET_Y, CELL_SIZE, hints) => {
+// ★ 拡張版：hintsに加えて、問題用の activeSymbols, hintSymbols, isHintModeFlag を受け取れるようにします
+export const drawSymmetryElements = (
+	ctx,
+	groupId,
+	OFFSET_X,
+	OFFSET_Y,
+	CELL_SIZE,
+	hints,
+	activeSymbols = null,
+	hintSymbols = null,
+	isHintModeFlag = false,
+) => {
 	const config = SymmetryConfig[groupId];
 	if (!config) return;
 
-	// ★ 六角格子判定と、単位ベクトルの長さを計算
 	const isHexagonal = config.system === 'hexagonal';
 	const L = CELL_SIZE;
 	const H_tri = (L * Math.sqrt(3)) / 2;
 
-	// ★ 座標 (u, v) を直交座標 (x, y) に変換するヘルパー関数
 	const getPos = (u, v) => {
 		if (isHexagonal) {
-			// 六角格子の場合：uを水平方向、vを斜め60度方向のベクトルとして直交座標に変換
 			return {
 				x: OFFSET_X + u * L + v * (L / 2),
 				y: OFFSET_Y + v * H_tri,
 			};
 		} else {
-			// 直交格子の場合（既存ロジック）
 			return {
 				x: OFFSET_X + u * CELL_SIZE,
 				y: OFFSET_Y + v * CELL_SIZE,
@@ -47,73 +52,112 @@ export const drawSymmetryElements = (ctx, groupId, OFFSET_X, OFFSET_Y, CELL_SIZE
 		}
 	};
 
-	// 対称面 (線) の描画
-	config.lines.forEach(([u1, v1, u2, v2, type, vis]) => {
-		const isMirrorHint = type === 'm' && hints.mirror;
-		const isGlideHint = type === 'g' && hints.glide;
-		const isInitialVisible = vis === 'i' && hints.showProblem;
+	// 共通の描画判定ロジック
+	const getDisplayState = (id, type) => {
+		const numId = Number(id);
+		// A. 問題・ヒントの指定（配列）がある場合（本番・練習モード）
+		if (activeSymbols || hintSymbols) {
+			// ★ hints.showProblem がオンのときだけ問題の記号を表示する
+			if (hints.showProblem && activeSymbols && activeSymbols.includes(numId)) {
+				return { visible: true, isHint: false };
+			}
+			// ヒント記号は isHintModeFlag がオンなら独立して表示する
+			if (hintSymbols && hintSymbols.includes(numId) && isHintModeFlag) {
+				return { visible: true, isHint: true };
+			}
+			return { visible: false, isHint: false };
+		}
 
-		if (isInitialVisible || (vis === 'h' && (isMirrorHint || isGlideHint))) {
-			// ヘルパー関数で始点と終点を計算
+		// B. 指定がない場合（デバッグモード：チェックボックス連動）
+		// ★ 「問題を表示」がオフの場合は非表示にする
+		if (!hints.showProblem) {
+			return { visible: false, isHint: false };
+		}
+
+		if (type === 'm' && hints.mirror) return { visible: true, isHint: false };
+		if (type === 'g' && hints.glide) return { visible: true, isHint: false };
+		if (type.startsWith('r') && hints.rotation) return { visible: true, isHint: false };
+
+		return { visible: false, isHint: false };
+	};
+
+	// 対称面 (線) の描画
+	if (config.lines) {
+		// Object.entries を使い、IDと配列 [type, u1, v1, u2, v2] を正しく取得
+		Object.entries(config.lines).forEach(([id, [type, u1, v1, u2, v2]]) => {
+			const { visible, isHint } = getDisplayState(id, type);
+			if (!visible) return;
+
 			const p1 = getPos(u1, v1);
 			const p2 = getPos(u2, v2);
 
+			ctx.save();
 			ctx.beginPath();
 			ctx.strokeStyle = 'red';
+			ctx.globalAlpha = isHint ? 0.5 : 1.0; // ヒントの不透明度
+
 			if (type === 'm') {
 				ctx.lineWidth = 4;
 				ctx.setLineDash([]);
 			} else if (type === 'g') {
 				ctx.lineWidth = 3;
-				ctx.setLineDash(CELL_SIZE === 200 ? [6, 6] : [8, 8]);
+				ctx.setLineDash([8, 8]);
 			}
+
 			ctx.moveTo(p1.x, p1.y);
 			ctx.lineTo(p2.x, p2.y);
 			ctx.stroke();
-			ctx.setLineDash([]);
-		}
-	});
+			ctx.restore();
+		});
+	}
 
 	// 回転対称軸の描画
-	config.rotations.forEach(([u, v, n, vis]) => {
-		const isRotationHint = hints.rotation;
-		const isInitialVisible = vis === 'i' && hints.showProblem;
+	if (config.rotations) {
+		Object.entries(config.rotations).forEach(([id, [type, u, v]]) => {
+			const { visible, isHint } = getDisplayState(id, type);
+			if (!visible) return;
 
-		if (isInitialVisible || (vis === 'h' && isRotationHint)) {
-			// ヘルパー関数で中心座標を計算
 			const p = getPos(u, v);
 			const cx = p.x;
 			const cy = p.y;
 
+			// 'r2' -> 2, 'r3' -> 3 のように数値を抽出
+			const n = parseInt(type.replace('r', ''), 10);
+
+			ctx.save();
 			ctx.fillStyle = 'red';
+			ctx.strokeStyle = 'red';
+			ctx.globalAlpha = isHint ? 0.5 : 1.0; // ヒントの不透明度
 			ctx.beginPath();
-			const r = 17; // 4回回転以上の基準サイズ(約24pxの半分)
+
+			const r = CELL_SIZE === 200 ? 10 : 17; // 枠サイズに応じた半径調整
 
 			if (n === 2) {
-				// 楕円
-				ctx.ellipse(cx, cy, 10, 6.5, 0, 0, 2 * Math.PI);
+				ctx.ellipse(cx, cy, r, r * 0.65, 0, 0, 2 * Math.PI);
 			} else if (n === 3) {
-				// 三角形
-				ctx.moveTo(cx, cy - r);
-				ctx.lineTo(cx + r * 0.866, cy + r / 2);
-				ctx.lineTo(cx - r * 0.866, cy + r / 2);
+				for (let i = 0; i < 3; i++) {
+					const angle = (i * 2 * Math.PI) / 3 - Math.PI / 2;
+					ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+				}
 				ctx.closePath();
 			} else if (n === 4) {
-				// ひし形
-				ctx.moveTo(cx, cy - r);
-				ctx.lineTo(cx + r, cy);
-				ctx.lineTo(cx, cy + r);
-				ctx.lineTo(cx - r, cy);
+				for (let i = 0; i < 4; i++) {
+					const angle = (i * 2 * Math.PI) / 4 - Math.PI / 4;
+					ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+				}
 				ctx.closePath();
 			} else if (n === 6) {
-				// 六角形
 				for (let i = 0; i < 6; i++) {
 					const angle = (i * Math.PI) / 3;
 					ctx.lineTo(cx + r * 0.8 * Math.cos(angle), cy + r * 0.8 * Math.sin(angle));
 				}
 				ctx.closePath();
 			}
+
+			ctx.lineWidth = 1;
 			ctx.fill();
-		}
-	});
+			ctx.stroke();
+			ctx.restore();
+		});
+	}
 };

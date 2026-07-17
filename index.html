@@ -4,6 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>perfect symmetry</title>
+		<link rel="icon" href="data:," />
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
@@ -12,7 +13,7 @@
 			<!-- ==================== フロント画面 ==================== -->
 			<div id="view-front" class="view-section">
 				<div class="title-area">
-					<h1>Perfect Symmetry <span class="version-text">beta 1.4</span></h1>
+					<h1>Perfect Symmetry <span class="version-text">beta 1.5</span></h1>
 					<p>平面群を作るゲーム</p>
 				</div>
 
@@ -22,7 +23,7 @@
 					</button>
 				</div>
 
-				<!-- 2×2のゲームモード選択エリア -->
+				<!-- 2×2 of the game mode selection area -->
 				<div class="menu-grid game-modes">
 					<button onclick="startGame('easy')">
 						<span class="mode-title">イージー</span>
@@ -58,8 +59,25 @@
 			<!-- ==================== ゲーム画面 ==================== -->
 			<div id="view-game" class="view-section" style="display: none">
 				<!-- ゲーム画面上部ヘッダー -->
-				<div class="game-header">
-					<button onclick="returnToFront()">フロント画面にもどる</button>
+				<div
+					class="game-header"
+					style="display: flex; justify-content: space-between; align-items: center"
+				>
+					<div style="display: flex; align-items: center; gap: 15px">
+						<button onclick="returnToFront()">フロント画面にもどる</button>
+						<!-- モード表示用の要素を追加 -->
+						<span
+							id="current-mode-display"
+							style="
+								font-weight: bold;
+								color: #444;
+								font-size: 15px;
+								background: #e9ecef;
+								padding: 4px 12px;
+								border-radius: 15px;
+							"
+						></span>
+					</div>
 					<button class="icon-btn" onclick="openTutorial()">
 						<span class="circle-icon">?</span>
 					</button>
@@ -68,127 +86,201 @@
 				<div id="debug-panel" style="display: none">
 					<div class="debug-title">デバッグツール</div>
 
-					<!-- ★ 左右2カラム構造：左にプルダウン、右にトグル -->
+					<!-- 1. 4連動プルダウンエリア（縦に並べて横幅いっぱいに広げる） -->
+					<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px">
+						<!-- 遊ぶモードのプルダウン -->
+						<div style="display: flex; flex-direction: column; gap: 3px">
+							<span style="font-weight: bold; font-size: 12px; color: #555">遊ぶモード</span>
+							<select
+								id="debug-mode-select"
+								class="form-control"
+								style="
+									width: 100%;
+									height: 32px;
+									border: 1px solid #ccc;
+									border-radius: 4px;
+									padding: 4px;
+								"
+							>
+								<option value="easy">イージー</option>
+								<option value="hard">ハード</option>
+								<option value="timeattack">タイムアタック</option>
+								<option value="blind">ブラインド</option>
+							</select>
+						</div>
+
+						<!-- 出題する平面群のプルダウン -->
+						<div style="display: flex; flex-direction: column; gap: 3px">
+							<span style="font-weight: bold; font-size: 12px; color: #555">出題する平面群</span>
+							<select
+								id="debug-group-select"
+								class="form-control"
+								style="
+									width: 100%;
+									height: 32px;
+									border: 1px solid #ccc;
+									border-radius: 4px;
+									padding: 4px;
+								"
+							></select>
+						</div>
+
+						<!-- 出題問題のプルダウン -->
+						<div style="display: flex; flex-direction: column; gap: 3px">
+							<span style="font-weight: bold; font-size: 12px; color: #555">出題問題</span>
+							<select
+								id="debug-problem-select"
+								class="form-control"
+								style="
+									width: 100%;
+									height: 32px;
+									border: 1px solid #ccc;
+									border-radius: 4px;
+									padding: 4px;
+								"
+							></select>
+						</div>
+
+						<!-- 記号配置のプルダウン -->
+						<div style="display: flex; flex-direction: column; gap: 3px">
+							<span style="font-weight: bold; font-size: 12px; color: #555">記号配置</span>
+							<select
+								id="debug-symbol-select"
+								class="form-control"
+								style="
+									width: 100%;
+									height: 32px;
+									border: 1px solid #ccc;
+									border-radius: 4px;
+									padding: 4px;
+								"
+							></select>
+						</div>
+					</div>
+
+					<!-- 2. 図形、色、手動配置トグルの横並びエリア -->
 					<div
 						style="
 							display: flex;
 							flex-wrap: wrap;
-							gap: 20px;
-							align-items: flex-start;
+							gap: 15px;
+							align-items: flex-end;
 							margin-bottom: 10px;
 						"
 					>
-						<!-- 【左カラム】プルダウン群 -->
-						<div
-							style="flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 10px"
-						>
-							<!-- 平面群のプルダウン -->
-							<div style="display: flex; flex-direction: column; gap: 3px">
-								<span style="font-weight: bold; font-size: 12px; color: #555">平面群の選択</span>
-								<select
-									id="group-select"
-									class="form-control"
+						<!-- 図形プルダウン -->
+						<div style="flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 3px">
+							<span style="font-weight: bold; font-size: 12px; color: #555">図形</span>
+							<select
+								id="debug-shape-select"
+								class="form-control"
+								style="
+									width: 100%;
+									height: 32px;
+									border: 1px solid #ccc;
+									border-radius: 4px;
+									padding: 4px;
+								"
+							></select>
+						</div>
+
+						<!-- 色選択カスタムカラーピッカー -->
+						<div style="flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 3px">
+							<span style="font-weight: bold; font-size: 12px; color: #555">色</span>
+							<div
+								id="debug-color-picker"
+								class="custom-color-picker"
+								style="position: relative; width: 100%"
+							>
+								<!-- 現在選択されている色を表示するボタン -->
+								<button
+									type="button"
+									id="color-picker-trigger"
+									class="color-picker-trigger"
 									style="
 										width: 100%;
 										height: 32px;
 										border: 1px solid #ccc;
 										border-radius: 4px;
-										padding: 4px;
+										cursor: pointer;
 									"
-								></select>
+								></button>
+								<!-- 色の選択肢一覧リスト -->
+								<div
+									id="color-picker-options"
+									class="color-picker-options"
+									style="
+										display: none;
+										position: absolute;
+										top: 100%;
+										left: 0;
+										z-index: 10;
+										background: #fff;
+										border: 1px solid #ccc;
+										width: 100%;
+									"
+								></div>
 							</div>
-
-							<!-- 図形と色のプルダウン（横並び） -->
-							<div style="display: flex; gap: 10px">
-								<!-- 図形 -->
-								<div style="flex: 1; display: flex; flex-direction: column; gap: 3px">
-									<span style="font-weight: bold; font-size: 12px; color: #555">図形</span>
-									<select
-										id="debug-shape-select"
-										class="form-control"
-										style="
-											width: 100%;
-											height: 32px;
-											border: 1px solid #ccc;
-											border-radius: 4px;
-											padding: 4px;
-										"
-									></select>
-								</div>
-								<!-- 色 -->
-								<div style="flex: 1; display: flex; flex-direction: column; gap: 3px">
-									<span style="font-weight: bold; font-size: 12px; color: #555">色</span>
-									<div
-										id="debug-color-picker"
-										class="custom-color-picker"
-										style="position: relative; width: 100%"
-									>
-										<!-- 現在選択されている色を表示するボタン -->
-										<button
-											type="button"
-											id="color-picker-trigger"
-											class="color-picker-trigger"
-											style="
-												width: 100%;
-												height: 32px;
-												border: 1px solid #ccc;
-												border-radius: 4px;
-												cursor: pointer;
-											"
-										></button>
-										<!-- 色の選択肢一覧リスト -->
-										<div
-											id="color-picker-options"
-											class="color-picker-options"
-											style="
-												display: none;
-												position: absolute;
-												top: 100%;
-												left: 0;
-												z-index: 10;
-												background: #fff;
-												border: 1px solid #ccc;
-												width: 100%;
-											"
-										></div>
-									</div>
-									<!-- もともとのJSとの互換性のために、非表示のselectを裏側に残しておきます -->
-									<select id="debug-color-select" style="display: none"></select>
-								</div>
-							</div>
+							<!-- もともとのJSとの互換性のために、非表示のselectを裏側に残しておきます -->
+							<select id="debug-color-select" style="display: none"></select>
 						</div>
 
-						<!-- 【右カラム】トグル群（縦一列に整列） -->
-						<div
+						<!-- 自分で初期配置を決めるトグル（「色」のすぐ右隣に配置） -->
+						<label
+							class="toggle-switch"
+							id="manual-init-label"
 							style="
-								display: flex;
-								flex-direction: column;
-								gap: 12px;
-								min-width: 220px;
-								padding-top: 15px;
+								display: inline-flex;
+								align-items: center;
+								margin: 0;
+								margin-bottom: 6px;
+								min-width: 200px;
 							"
 						>
-							<!-- ランダムな平面群トグル -->
-							<label
-								class="toggle-switch"
-								style="display: inline-flex; align-items: center; margin: 0"
+							<input type="checkbox" id="manual-init-toggle" />
+							<span class="toggle-slider"></span>
+							<span class="toggle-label" style="font-weight: bold; font-size: 12px; color: #555"
+								>自分で初期配置を決める</span
 							>
-								<input type="checkbox" id="random-group-toggle" />
-								<span class="toggle-slider"></span>
-								<span class="toggle-label" style="font-weight: bold">ランダムな平面群</span>
-							</label>
+						</label>
 
-							<!-- 自分で初期配置を決めるトグル -->
-							<label
-								class="toggle-switch"
-								id="manual-init-label"
-								style="display: inline-flex; align-items: center; margin: 0"
+						<!-- 問題を表示トグル -->
+						<label
+							class="toggle-switch"
+							id="show-problem-label"
+							style="
+								display: inline-flex;
+								align-items: center;
+								margin: 0;
+								margin-bottom: 6px;
+								min-width: 200px;
+							"
+						>
+							<input type="checkbox" id="show-problem-toggle" checked />
+							<span class="toggle-slider"></span>
+							<span class="toggle-label" style="font-weight: bold; font-size: 12px; color: #555"
+								>問題を表示</span
 							>
-								<input type="checkbox" id="manual-init-toggle" />
-								<span class="toggle-slider"></span>
-								<span class="toggle-label" style="font-weight: bold">自分で初期配置を決める</span>
-							</label>
-						</div>
+						</label>
+
+						<!-- ヒントを表示トグル -->
+						<label
+							class="toggle-switch"
+							id="hint-label"
+							style="
+								display: inline-flex;
+								align-items: center;
+								margin: 0;
+								margin-bottom: 6px;
+								min-width: 200px;
+							"
+						>
+							<input type="checkbox" id="hint-toggle" />
+							<span class="toggle-slider"></span>
+							<span class="toggle-label" style="font-weight: bold; font-size: 12px; color: #555"
+								>ヒントを表示</span
+							>
+						</label>
 					</div>
 
 					<!-- ヒント用のテキスト（チェックが入ったときなどに表示されます） -->
@@ -205,7 +297,7 @@
 						※ ホイールでサイズ変更、左クリックで配置してゲーム開始
 					</div>
 
-					<!-- デバッグ用カウンターエリア（新規追加） -->
+					<!-- デバッグ用カウンターエリア -->
 					<div
 						id="debug-counter-area"
 						style="
@@ -250,83 +342,24 @@
 
 							<!-- 格子エリア -->
 							<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 20px"></canvas>
-
-							<div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch">
-								<!-- 「問題を表示」の独立した枠 -->
-								<div
-									style="
-										border: 1px solid #ccc;
-										border-radius: 4px;
-										padding: 10px;
-										background: #fff;
-										display: flex;
-										flex-direction: column;
-										align-items: center;
-										justify-content: center;
-										min-width: 100px;
-									"
-								>
-									<div
-										style="
-											font-weight: bold;
-											margin-bottom: 8px;
-											border-bottom: 1px solid #eee;
-											width: 100%;
-											text-align: center;
-											padding-bottom: 4px;
-											color: #555;
-										"
-									>
-										問題を表示
-									</div>
-									<label style="cursor: pointer"
-										><input type="checkbox" id="show-problem-toggle" checked /> 表示</label
-									>
-								</div>
-
-								<!-- 「ヒントを表示」の独立した枠 -->
-								<div
-									style="
-										border: 1px solid #ccc;
-										border-radius: 4px;
-										padding: 10px;
-										background: #fff;
-										flex-grow: 1;
-									"
-								>
-									<div
-										style="
-											font-weight: bold;
-											margin-bottom: 8px;
-											border-bottom: 1px solid #eee;
-											padding-bottom: 4px;
-											color: #555;
-											text-align: center;
-										"
-									>
-										ヒントを表示
-									</div>
-									<div style="display: flex; gap: 15px; justify-content: center; padding-top: 2px">
-										<label style="cursor: pointer"
-											><input type="checkbox" id="hint-rotation" /> 回転軸</label
-										>
-										<label style="cursor: pointer"
-											><input type="checkbox" id="hint-mirror" /> 鏡映面</label
-										>
-										<label style="cursor: pointer"
-											><input type="checkbox" id="hint-glide" /> 映進面</label
-										>
-									</div>
-								</div>
-							</div>
 						</div>
 
 						<!-- 右側：サイドパネル -->
 						<div class="side-panel">
 							<div class="controls-grid">
-								<button id="flip-btn">反転 (M)</button>
-								<button id="reset-btn">配置リセット (R)</button>
-								<button id="score-btn">採点する</button>
+								<!-- ★ 追加: ヒントを見るボタン（上に配置し、横幅いっぱいにする） -->
+								<button id="hint-action-btn" style="grid-column: 1 / -1; margin-bottom: 10px">
+									ヒントを見る
+								</button>
+
+								<button id="flip-btn">反転<br />(M)</button>
+								<button id="rotate-btn">回転<br />（右クリック）</button>
+								<button id="reset-btn" style="grid-column: 1 / -1; margin-bottom: 5px">
+									配置リセット (R)
+								</button>
+								<button id="score-btn" style="grid-column: 1 / -1; margin-top: 5px">
+									採点する
+								</button>
 							</div>
 
 							<!-- 採点結果エリア -->
