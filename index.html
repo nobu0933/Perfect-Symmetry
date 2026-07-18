@@ -4,6 +4,12 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>perfect symmetry</title>
+		<!-- ▼ Font Awesome をCDN経由で導入 -->
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+		/>
+		<!-- ▲ ここまで -->
 		<link rel="icon" href="data:," />
 		<link rel="stylesheet" href="style.css" />
 	</head>
@@ -13,7 +19,7 @@
 			<!-- ==================== フロント画面 ==================== -->
 			<div id="view-front" class="view-section">
 				<div class="title-area">
-					<h1>Perfect Symmetry <span class="version-text">beta 1.5</span></h1>
+					<h1>Perfect Symmetry <span class="version-text">beta 1.6</span></h1>
 					<p>平面群を作るゲーム</p>
 				</div>
 
@@ -27,20 +33,20 @@
 				<div class="menu-grid game-modes">
 					<button onclick="startGame('easy')">
 						<span class="mode-title">イージー</span>
-						<span class="mode-desc">基本の平面群を練習します</span>
+						<span class="mode-desc">練習用のモードです</span>
 					</button>
 					<button onclick="startGame('hard')">
 						<span class="mode-title">ハード</span>
-						<span class="mode-desc">より複雑な平面群に挑戦します</span>
+						<span class="mode-desc">ここからが本番です</span>
 					</button>
 					<button onclick="startGame('timeattack')">
 						<span class="mode-title">タイムアタック</span>
-						<span class="mode-desc">制限時間内にどれだけ解けるか競います</span>
+						<span class="mode-desc">制限時間つきのモードです</span>
 					</button>
 					<!-- ブラインドとギャラリーを入れ替えました -->
 					<button onclick="openGallery()">
 						<span class="mode-title">ギャラリー</span>
-						<span class="mode-desc">保存した過去の作品を鑑賞します</span>
+						<span class="mode-desc">保存した過去の作品を鑑賞できます</span>
 					</button>
 				</div>
 
@@ -369,24 +375,65 @@
 
 								<!-- 模範解答表示用キャンバス -->
 								<div class="answer-box">
-									<div class="answer-title">解答</div>
+									<!-- ▼変更：解答を左上に、平面群名を中央上に配置 -->
+									<div
+										style="
+											position: relative;
+											margin-bottom: 8px;
+											text-align: center;
+											min-height: 1.5em;
+										"
+									>
+										<div
+											class="answer-title"
+											style="position: absolute; left: 0; top: 0; margin: 0"
+										>
+											<!-- 解答 -->
+										</div>
+										<span id="answer-group-name" style="font-weight: bold; font-size: 1.1em"></span>
+									</div>
+									<!-- ▲変更ここまで -->
+
 									<canvas id="answerCanvas" width="240" height="240"></canvas>
 
-									<label class="toggle-switch" style="margin-top: 15px; margin-bottom: 5px">
-										<input type="checkbox" id="show-user-answer-toggle" />
-										<span class="toggle-slider"></span>
-										<span class="toggle-label">自分の回答を表示</span>
-									</label>
-								</div>
+									<!-- ▼変更：Flexboxを使ってトグルとボタンを横並びに配置 -->
+									<div
+										style="
+											display: flex;
+											justify-content: center;
+											align-items: center;
+											gap: 15px;
+											margin-top: 15px;
+											margin-bottom: 5px;
+										"
+									>
+										<!-- トグルスイッチ -->
+										<label class="toggle-switch" style="margin: 0">
+											<!-- 個別のmarginは外して親要素で管理 -->
+											<input type="checkbox" id="show-user-answer-toggle" />
+											<!-- ※IDはご自身の環境に合わせてください -->
+											<span class="toggle-slider"></span>
+											<span class="label-text">自分の回答を表示</span>
+										</label>
 
-								<!-- ギャラリー保存用ボタン -->
-								<button
-									id="save-gallery-btn"
-									onclick="saveToGallery()"
-									style="margin-top: 10px; width: 100%"
-								>
-									ギャラリーに保存
-								</button>
+										<!-- ギャラリーに保存ボタン（Font Awesomeのカメラアイコン版） -->
+										<button
+											id="saveGalleryBtn"
+											title="ギャラリーに保存"
+											style="
+												background: none;
+												border: none;
+												font-size: 1.5em;
+												cursor: pointer;
+												padding: 5px;
+												color: #0c98ab;
+											"
+										>
+											<!-- 絵文字の代わりに <i> タグを配置 -->
+											<i class="fa-solid fa-camera"></i>
+										</button>
+									</div>
+								</div>
 								<button id="next-btn" style="margin-top: 10px">次の問題</button>
 
 								<!-- デバッグ時専用：減点詳細表示エリア -->
@@ -404,9 +451,43 @@
 
 			<!-- ==================== ギャラリー画面 ==================== -->
 			<div id="view-gallery" class="view-section" style="display: none">
-				<div class="game-header">
-					<button onclick="returnToFront()">フロント画面にもどる</button>
-					<h2>ギャラリー (最大10件)</h2>
+				<div
+					class="game-header"
+					style="display: flex; justify-content: space-between; align-items: center"
+				>
+					<div style="display: flex; align-items: center; gap: 15px">
+						<button onclick="returnToFront()">フロント画面にもどる</button>
+
+						<!-- ★追加：保存数の表示 -->
+						<span
+							id="gallery-count-display"
+							style="
+								font-weight: bold;
+								color: #444;
+								font-size: 15px;
+								background: #e9ecef;
+								padding: 4px 12px;
+								border-radius: 15px;
+							"
+						>
+							保存数：0/100
+						</span>
+
+						<!-- ★追加：削除確認のトグルスイッチ -->
+						<label
+							class="toggle-switch"
+							style="margin: 0; display: inline-flex; align-items: center"
+						>
+							<input type="checkbox" id="confirm-delete-toggle" checked />
+							<span class="toggle-slider"></span>
+							<span
+								class="label-text"
+								style="font-weight: bold; font-size: 13px; color: #555; margin-left: 8px"
+								>削除の確認をする</span
+							>
+						</label>
+					</div>
+					<h2 style="margin: 0">ギャラリー</h2>
 				</div>
 				<div id="gallery-container">
 					<p style="text-align: center; color: #666">まだ保存された作品はありません。</p>
@@ -449,5 +530,151 @@
 			</div>
 		</div>
 		<script type="module" src="main.js"></script>
+		<!-- ギャラリー保存確認・オーバーレイ（疑似ポップアップ） -->
+		<div id="save-gallery-modal" class="tutorial-overlay" style="display: none">
+			<!-- ★幅を400pxから600pxに広げる -->
+			<div class="tutorial-content" style="max-width: 600px; text-align: center">
+				<button class="close-x-btn" id="close-save-gallery-btn">×</button>
+
+				<h2 style="border-bottom: none; margin-bottom: 10px">保存の確認</h2>
+				<div class="tutorial-body">
+					<p>この作品をギャラリーに保存しますか？</p>
+
+					<!-- ★プレビュー表示エリアを追加 -->
+					<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px">
+						<!-- 縮小再現用のキャンバス (サイズは適宜調整してください) -->
+						<canvas
+							id="gallery-preview-canvas"
+							width="300"
+							height="300"
+							style="
+								background: white;
+								border: 1px solid #ccc;
+								max-width: 100%;
+								height: auto;
+								box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+							"
+						></canvas>
+
+						<!-- 記録された情報を表示するテキストエリア -->
+						<div
+							id="gallery-preview-info"
+							style="
+								font-size: 0.9em;
+								color: #555;
+								margin-top: 15px;
+								text-align: left;
+								line-height: 1.5;
+							"
+						>
+							<!-- ここに情報が挿入されます -->
+						</div>
+					</div>
+
+					<div class="confirm-btn-group">
+						<button class="confirm-btn-yes" id="confirm-save-gallery-btn">保存する</button>
+						<button class="confirm-btn-no" id="cancel-save-gallery-btn">キャンセル</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- ========================================== -->
+		<!-- ギャラリー削除確認・オーバーレイ（疑似ポップアップ） -->
+		<!-- ========================================== -->
+		<div id="delete-gallery-modal" class="tutorial-overlay" style="display: none">
+			<div class="tutorial-content" style="max-width: 600px; text-align: center">
+				<button class="close-x-btn" id="close-delete-gallery-btn">×</button>
+
+				<h2 style="border-bottom: none; margin-bottom: 10px; color: #d9534f">削除の確認</h2>
+				<div class="tutorial-body">
+					<p>以下の作品を削除してもよろしいですか？</p>
+
+					<!-- プレビュー表示エリア -->
+					<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px">
+						<canvas
+							id="delete-gallery-preview-canvas"
+							width="300"
+							height="300"
+							style="
+								background: white;
+								border: 1px solid #ccc;
+								max-width: 100%;
+								height: auto;
+								box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+							"
+						></canvas>
+
+						<!-- 記録された情報を表示するテキストエリア -->
+						<div
+							id="delete-gallery-preview-info"
+							style="
+								font-size: 0.9em;
+								color: #555;
+								margin-top: 15px;
+								text-align: left;
+								line-height: 1.5;
+							"
+						></div>
+					</div>
+
+					<div class="confirm-btn-group">
+						<!-- 削除ボタンは赤色にして注意を促す -->
+						<button
+							class="confirm-btn-yes"
+							id="confirm-delete-gallery-btn"
+							style="background-color: #d9534f; border-color: #d9534f"
+						>
+							削除する
+						</button>
+						<button class="confirm-btn-no" id="cancel-delete-gallery-btn">キャンセル</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ========================================== -->
+		<!-- ギャラリー作品拡大表示・オーバーレイ（文字なし） -->
+		<!-- ========================================== -->
+		<div id="view-gallery-modal" class="tutorial-overlay" style="display: none">
+			<!-- ▼ 変更: background, border, box-shadow を無効化して全体を透過 -->
+			<div
+				class="tutorial-content"
+				style="
+					max-width: 650px;
+					text-align: center;
+					padding: 20px;
+					background: transparent;
+					border: none;
+					box-shadow: none;
+				"
+			>
+				<!-- ▼ 変更: 背景が透過されるため、×ボタンを白くして少し大きく見やすく調整 -->
+				<button
+					class="close-x-btn"
+					id="close-view-gallery-btn"
+					style="color: white; font-size: 36px; right: 10px; top: -10px"
+				>
+					×
+				</button>
+
+				<div class="tutorial-body" style="padding: 0; margin-top: 15px">
+					<!-- 文字は一切入れず、キャンバスだけを大きく表示します -->
+					<canvas
+						id="view-gallery-canvas"
+						width="600"
+						height="600"
+						style="
+							background: white;
+							border: 1px solid #ccc;
+							max-width: 100%;
+							height: auto;
+							box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+							display: block;
+							margin: 0 auto;
+						"
+					></canvas>
+				</div>
+			</div>
+		</div>
 	</body>
 </html>

@@ -3,8 +3,106 @@ import { SymmetryGroups } from './symmetryGroups.js';
 import { SymmetryConfig } from './symmetryConfig.js';
 import { ShapeDefs, SHAPES, SHAPE_TYPES, SHAPE_COLORS } from './shapes.js';
 import { ProblemConfig } from './problemConfig.js';
+import { initGallery, loadAndDisplayGallery, resetSaveButton } from './gallery.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+	// ==========================================
+	// --- 追加：ギャラリー用の連携関数 ---
+	// ==========================================
+
+	// ① 現在の情報を記録・取得する関数
+	function getAppState() {
+		return {
+			symmetryGroup: currentGroup,
+			shapeType: initialShape.type,
+			shapeColor: initialShape.color,
+			shapeSize: initialShape.size,
+			placementsCount: placedShapes.length,
+			score: currentScore, // ★追加: 得点を状態に含める
+			placements: JSON.parse(JSON.stringify(placedShapes)),
+		};
+	}
+
+	// ② プレビュー用キャンバスに縮小して描画する関数
+	function renderPreview(previewCtx, previewWidth, previewHeight, state) {
+		const mainCanvasWidth = canvas.width || 600;
+		const mainCanvasHeight = canvas.height || 600;
+
+		const scaleX = previewWidth / mainCanvasWidth;
+		const scaleY = previewHeight / mainCanvasHeight;
+		const scale = Math.min(scaleX, scaleY);
+
+		previewCtx.save();
+		previewCtx.scale(scale, scale);
+
+		// 背景をクリア
+		previewCtx.clearRect(0, 0, mainCanvasWidth, mainCanvasHeight);
+
+		const config = SymmetryConfig[state.symmetryGroup];
+		const isHexagonal = config && config.system === 'hexagonal';
+
+		// 保存された各配置データについて、キャンバス全体に繰り返し描画する
+		state.placements.forEach((shape) => {
+			if (isHexagonal) {
+				const L = CELL_SIZE;
+				const H_tri = (L * Math.sqrt(3)) / 2;
+
+				const vFloat = shape.y / H_tri;
+				const uFloat = (shape.x - vFloat * (L / 2)) / L;
+				const uBase = uFloat - Math.floor(uFloat);
+				const vBase = vFloat - Math.floor(vFloat);
+				const relX = uBase * L + vBase * (L / 2);
+				const relY = vBase * H_tri;
+
+				const maxU = Math.ceil(mainCanvasWidth / L) + 2;
+				const maxV = Math.ceil(mainCanvasHeight / H_tri) + 2;
+
+				for (let u = -3; u <= maxU; u++) {
+					for (let v = -3; v <= maxV; v++) {
+						const dx = u * L + v * (L / 2);
+						const dy = v * H_tri;
+
+						drawShape(
+							previewCtx,
+							relX + dx,
+							relY + dy,
+							shape.angle,
+							shape.flipped,
+							state.shapeType,
+							state.shapeSize,
+							state.shapeColor,
+							1.0,
+						);
+					}
+				}
+			} else {
+				const relX = ((shape.x % CELL_SIZE) + CELL_SIZE) % CELL_SIZE;
+				const relY = ((shape.y % CELL_SIZE) + CELL_SIZE) % CELL_SIZE;
+
+				for (let gx = -CELL_SIZE; gx <= mainCanvasWidth; gx += CELL_SIZE) {
+					for (let gy = -CELL_SIZE; gy <= mainCanvasHeight; gy += CELL_SIZE) {
+						drawShape(
+							previewCtx,
+							gx + relX,
+							gy + relY,
+							shape.angle,
+							shape.flipped,
+							state.shapeType,
+							state.shapeSize,
+							state.shapeColor,
+							1.0,
+						);
+					}
+				}
+			}
+		});
+
+		previewCtx.restore();
+	}
+
+	// ★ 引数を渡してギャラリーを初期化
+	initGallery(getAppState, renderPreview);
+
 	// 1. 図形プルダウンの生成と連動
 	const shapeSelect = document.getElementById('debug-shape-select');
 	if (shapeSelect) {
@@ -120,6 +218,7 @@ let previewShape = { x: 0, y: 0, angle: 0, flipped: false };
 let placedShapes = [];
 
 let isScored = false;
+let currentScore = 0; // ★追加: 現在の得点を保持する変数
 
 // ==========================================
 // デバッグカウンターの更新関数
@@ -342,6 +441,7 @@ function wrapHex(x, y, OFFSET_X, OFFSET_Y, CELL_SIZE) {
 
 function resetUI() {
 	isScored = false;
+	currentScore = 0; // ★追加: リセット時に0に戻す
 	document.getElementById('score-btn').disabled = false;
 	document.getElementById('flip-btn').disabled = false;
 	document.getElementById('rotate-btn').disabled = false;
@@ -928,6 +1028,7 @@ function doScore() {
 
 	totalScore = Math.max(0, Math.min(100, Math.round(totalScore)));
 	isScored = true;
+	currentScore = totalScore; // ★追加: 計算されたtotalScoreをグローバル変数に格納する
 
 	updateDebugCounters({
 		extraPenalty,
@@ -974,6 +1075,7 @@ function nextProblem() {
 
 	// ★ 追加: 新しい問題に進むタイミングでヒント状態を完全にクリア
 	clearHintState();
+	resetSaveButton();
 
 	const shapeSelect = document.getElementById('debug-shape-select');
 	if (shapeSelect) shapeSelect.value = initialShape.type;
@@ -1026,6 +1128,12 @@ window.addEventListener('keydown', (e) => {
 });
 
 function drawModelAnswer() {
+	// ★ 追加: 出題された平面群の名前を表示
+	const groupNameEl = document.getElementById('answer-group-name');
+	if (groupNameEl) {
+		groupNameEl.textContent = `平面群：${currentGroup}`;
+	}
+
 	const aCanvas = document.getElementById('answerCanvas');
 	const aCtx = aCanvas.getContext('2d');
 
@@ -1298,6 +1406,7 @@ window.startGame = function (mode) {
 	currentAppMode = mode;
 	// ★ 追加: 新たにゲームを開始するタイミングで、ヒント状態やボタンの有効化を完全に初期化する
 	clearHintState();
+	resetSaveButton();
 
 	updateModeDisplay(mode);
 
@@ -1324,9 +1433,14 @@ window.startGame = function (mode) {
 
 window.openGallery = function () {
 	currentAppMode = 'gallery';
-	document.getElementById('view-front').style.display = 'none';
-	document.getElementById('view-game').style.display = 'none';
-	document.getElementById('view-gallery').style.display = 'block';
+	document.getElementById('view-front').style.display = 'none'; //[cite: 24]
+	document.getElementById('view-game').style.display = 'none'; //[cite: 24]
+	document.getElementById('view-gallery').style.display = 'block'; //[cite: 24]
+
+	// ★追加: ギャラリー画面を開いたときに一覧を描画する
+	if (typeof loadAndDisplayGallery === 'function') {
+		loadAndDisplayGallery();
+	}
 };
 
 window.returnToFront = function () {
@@ -1359,8 +1473,4 @@ window.openTutorial = function () {
 
 window.closeTutorial = function () {
 	document.getElementById('tutorial-modal').style.display = 'none';
-};
-
-window.saveToGallery = function () {
-	alert('ギャラリーに保存しました（機能は後で実装します）');
 };
