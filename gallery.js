@@ -2,7 +2,49 @@
 
 // main.js から渡された renderPreview をギャラリー描画時にも使い回すための変数
 let storedRenderPreview = null;
-let itemToDeleteIndex = null; // ★追加: 削除対象のインデックスを保持する変数
+let itemToDeleteIndex = null; // 削除対象のインデックスを保持する変数
+
+// ▼▼▼ 追加: どのボタンから呼ばれたかと、その時の状態を記憶する変数 ▼▼▼
+let currentState = null;
+let clickedSaveButton = null;
+
+// ▼▼▼ 追加: 外部（リザルト画面など）から保存モーダルを呼び出すための関数 ▼▼▼
+export function openSaveGalleryModal(state, btnElement) {
+	const saveModal = document.getElementById('save-gallery-modal');
+	const savePreviewCanvas = document.getElementById('gallery-preview-canvas');
+	const savePreviewInfo = document.getElementById('gallery-preview-info');
+
+	// すでに保存済みの場合は何もしない
+	if (btnElement && btnElement.dataset.saved === 'true') return;
+
+	currentState = state;
+	clickedSaveButton = btnElement; // クリックされたボタンを記憶
+
+	if (saveModal) {
+		if (savePreviewCanvas && typeof storedRenderPreview === 'function' && currentState) {
+			const previewCtx = savePreviewCanvas.getContext('2d');
+			previewCtx.clearRect(0, 0, savePreviewCanvas.width, savePreviewCanvas.height);
+			storedRenderPreview(
+				previewCtx,
+				savePreviewCanvas.width,
+				savePreviewCanvas.height,
+				currentState,
+			);
+		}
+
+		if (savePreviewInfo && currentState) {
+			savePreviewInfo.innerHTML = `
+				<strong>【作品の情報】</strong><br>
+				平面群： ${currentState.symmetryGroup.replace('_h', '')}<br>
+				図形の形： ${currentState.shapeType} （サイズ: ${Math.round(currentState.shapeSize)}）<br>
+				配置数： ${currentState.placementsCount}個<br>
+				得点： ${currentState.score}点
+			`;
+		}
+		saveModal.style.display = 'flex';
+	}
+}
+// ▲▲▲ ここまで ▲▲▲
 
 export function initGallery(getAppState, renderPreview) {
 	storedRenderPreview = renderPreview; // 関数を保持しておく
@@ -19,39 +61,11 @@ export function initGallery(getAppState, renderPreview) {
 	const savePreviewCanvas = document.getElementById('gallery-preview-canvas');
 	const savePreviewInfo = document.getElementById('gallery-preview-info');
 
-	let currentState = null;
-
 	if (saveBtn) {
 		saveBtn.addEventListener('click', () => {
-			// ★追加: すでに保存済み（チェックマーク状態）なら、ここで処理を止めて何も起こらないようにする
-			if (saveBtn.dataset.saved === 'true') return;
-
-			if (saveModal) {
-				if (typeof getAppState === 'function') {
-					currentState = getAppState();
-				}
-
-				if (savePreviewCanvas && typeof renderPreview === 'function' && currentState) {
-					const previewCtx = savePreviewCanvas.getContext('2d');
-					previewCtx.clearRect(0, 0, savePreviewCanvas.width, savePreviewCanvas.height);
-					renderPreview(
-						previewCtx,
-						savePreviewCanvas.width,
-						savePreviewCanvas.height,
-						currentState,
-					);
-				}
-
-				if (savePreviewInfo && currentState) {
-					savePreviewInfo.innerHTML = `
-						<strong>【作品の情報】</strong><br>
-						平面群： ${currentState.symmetryGroup}<br>
-						図形の形： ${currentState.shapeType} （サイズ: ${Math.round(currentState.shapeSize)}）<br>
-						配置数： ${currentState.placementsCount}個<br>
-						得点： ${currentState.score}点
-					`;
-				}
-				saveModal.style.display = 'flex';
+			// ★修正: 新しく作った共通関数を呼び出すように変更
+			if (typeof getAppState === 'function') {
+				openSaveGalleryModal(getAppState(), saveBtn);
 			}
 		});
 	}
@@ -110,21 +124,14 @@ export function initGallery(getAppState, renderPreview) {
 					// モーダルを閉じる
 					closeSaveModal();
 
-					// メイン画面の保存ボタンをチェックマークにする
-					if (saveBtn) {
-						saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
-						saveBtn.title = '保存済み';
-						// saveBtn.style.cursor = 'default';
-						saveBtn.style.color = '#28a745';
-
-						saveBtn.dataset.saved = 'true';
-
-						// saveBtn.blur();
-						// saveBtn.style.outline = 'none';
-						// saveBtn.style.boxShadow = 'none';
-						// saveBtn.style.border = 'none';
-						// saveBtn.style.background = 'transparent';
+					// ▼▼▼ 変更: 「saveBtn」ではなく「clickedSaveButton」をチェックマークにする ▼▼▼
+					if (clickedSaveButton) {
+						clickedSaveButton.innerHTML = '<i class="fa-solid fa-check"></i>';
+						clickedSaveButton.title = '保存済み';
+						clickedSaveButton.style.color = '#28a745';
+						clickedSaveButton.dataset.saved = 'true';
 					}
+					// ▲▲▲ ここまで ▲▲▲
 
 					// --- ポップアップ内のボタンを元の状態に戻しておく（次回開いたとき用） ---
 					confirmSaveBtn.innerHTML = originalHTML;
@@ -291,7 +298,7 @@ export function loadAndDisplayGallery() {
 		info.style.lineHeight = '1.5';
 		info.innerHTML = `
 			<div style="color: #888; font-size: 0.8em; margin-bottom: 5px;">${item.date}</div>
-			平面群 : ${item.symmetryGroup}<br>
+			平面群 : ${item.symmetryGroup.replace('_h', '')}<br>
 			得点 : ${item.score}点
 		`;
 
@@ -347,7 +354,7 @@ export function loadAndDisplayGallery() {
 					previewInfo.innerHTML = `
 						<strong>【作品の情報】</strong><br>
 						保存日時： ${item.date}<br>
-						平面群： ${item.symmetryGroup}<br>
+						平面群： ${item.symmetryGroup.replace('_h', '')}<br>
 						得点： ${item.score}点
 					`;
 				}

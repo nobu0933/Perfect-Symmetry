@@ -47,6 +47,24 @@ export const SymmetryGroups = {
 			drawSymmetryElements(ctx, 'pm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pm', 0, 0, 200, hints),
 	},
+	pm_h: {
+		name: 'pm (横鏡映)',
+		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
+			let corrects = [{ ...p0 }];
+			corrects.push({
+				x: p0.x,
+				y: wrap(2 * OFFSET_Y - p0.y, OFFSET_Y, CELL_SIZE),
+				// キャンバスのscale(-1, 1)仕様における横反転の角度計算
+				angle: (180 - p0.angle + 360) % 360,
+				flipped: !p0.flipped,
+				isInitial: false,
+			});
+			return filterDuplicates(corrects);
+		},
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'pm_h', OX, OY, CS, hints, active, hintSymbols, isHintMode),
+		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pm_h', 0, 0, 200, hints),
+	},
 	pg: {
 		name: 'pg (映進)',
 		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
@@ -63,6 +81,24 @@ export const SymmetryGroups = {
 		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
 			drawSymmetryElements(ctx, 'pg', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pg', 0, 0, 200, hints),
+	},
+	pg_h: {
+		name: 'pg (横映進)',
+		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
+			let corrects = [{ ...p0 }];
+			corrects.push({
+				// 横方向に半周期シフト
+				x: wrap(p0.x + CELL_SIZE / 2, OFFSET_X, CELL_SIZE),
+				y: wrap(2 * OFFSET_Y - p0.y, OFFSET_Y, CELL_SIZE),
+				angle: (180 - p0.angle + 360) % 360,
+				flipped: !p0.flipped,
+				isInitial: false,
+			});
+			return filterDuplicates(corrects);
+		},
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'pg_h', OX, OY, CS, hints, active, hintSymbols, isHintMode),
+		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pg_h', 0, 0, 200, hints),
 	},
 	cm: {
 		name: 'cm (鏡映・映進)',
@@ -92,8 +128,46 @@ export const SymmetryGroups = {
 			drawSymmetryElements(ctx, 'cm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'cm', 0, 0, 200, hints),
 	},
-	pmm: {
-		name: 'pmm (縦横鏡映・2回回転)',
+	cm_h: {
+		name: 'cm (横)',
+		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
+			let corrects = [{ ...p0 }];
+
+			// 1. 横鏡映 (m) : 横軸に対してそのまま反転
+			corrects.push({
+				x: p0.x,
+				y: wrap(2 * OFFSET_Y - p0.y, OFFSET_Y, CELL_SIZE),
+				angle: (180 - p0.angle + 360) % 360,
+				flipped: !p0.flipped,
+				isInitial: false,
+			});
+
+			// 2. センタリング : 面心格子のための平行移動 (x方向, y方向ともに1/2周期ズレ)
+			corrects.push({
+				x: wrap(p0.x + CELL_SIZE / 2, OFFSET_X, CELL_SIZE),
+				y: wrap(p0.y + CELL_SIZE / 2, OFFSET_Y, CELL_SIZE),
+				angle: p0.angle, // 平行移動なので角度はそのまま
+				flipped: p0.flipped, // 反転もなし
+				isInitial: false,
+			});
+
+			// 3. 横映進 (g) : 1の横鏡映をさらに1/2周期ズラしたもの（または2の反転）
+			corrects.push({
+				x: wrap(p0.x + CELL_SIZE / 2, OFFSET_X, CELL_SIZE),
+				y: wrap(2 * OFFSET_Y - p0.y + CELL_SIZE / 2, OFFSET_Y, CELL_SIZE),
+				angle: (180 - p0.angle + 360) % 360,
+				flipped: !p0.flipped,
+				isInitial: false,
+			});
+
+			return filterDuplicates(corrects);
+		},
+		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
+			drawSymmetryElements(ctx, 'cm_h', OX, OY, CS, hints, active, hintSymbols, isHintMode),
+		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'cm_h', 0, 0, 200, hints),
+	},
+	p2mm: {
+		name: 'p2mm (縦横鏡映・2回回転)',
 		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
 			let corrects = [{ ...p0 }];
 			corrects.push({
@@ -117,8 +191,8 @@ export const SymmetryGroups = {
 			return filterDuplicates(corrects);
 		},
 		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
-			drawSymmetryElements(ctx, 'pmm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
-		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pmm', 0, 0, 200, hints),
+			drawSymmetryElements(ctx, 'p2mm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
+		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'p2mm', 0, 0, 200, hints),
 	},
 	p2mg: {
 		name: 'p2mg (2回回転・縦鏡映・横映進)',
@@ -179,8 +253,8 @@ export const SymmetryGroups = {
 			drawSymmetryElements(ctx, 'pgg', OX, OY, CS, hints, active, hintSymbols, isHintMode),
 		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'pgg', 0, 0, 200, hints),
 	},
-	cmm: {
-		name: 'cmm (縦横鏡映・2回回転・中心等価)',
+	c2mm: {
+		name: 'c2mm (縦横鏡映・2回回転・中心等価)',
 		getCorrectShapes: (p0, OFFSET_X, OFFSET_Y, CELL_SIZE, wrap) => {
 			let corrects = [{ ...p0 }];
 			corrects.push({
@@ -215,8 +289,8 @@ export const SymmetryGroups = {
 			return filterDuplicates(corrects);
 		},
 		drawAxes: (ctx, OX, OY, CS, hints, active, hintSymbols, isHintMode) =>
-			drawSymmetryElements(ctx, 'cmm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
-		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'cmm', 0, 0, 200, hints),
+			drawSymmetryElements(ctx, 'c2mm', OX, OY, CS, hints, active, hintSymbols, isHintMode),
+		drawModelAxes: (ctx, hints) => drawSymmetryElements(ctx, 'c2mm', 0, 0, 200, hints),
 	},
 	p4: {
 		name: 'p4 (4回回転)',

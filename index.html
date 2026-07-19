@@ -16,7 +16,7 @@
 	<body>
 		<!-- 全体を囲むコンテナ -->
 		<div id="app-container">
-			<!-- ==================== フロント画面 ==================== -->
+			<!-- ==================== タイトル画面 ==================== -->
 			<div id="view-front" class="view-section">
 				<div class="title-area">
 					<h1>Perfect Symmetry <span class="version-text">beta 1.6</span></h1>
@@ -33,11 +33,13 @@
 				<div class="menu-grid game-modes">
 					<button onclick="startGame('easy')">
 						<span class="mode-title">イージー</span>
-						<span class="mode-desc">練習用のモードです</span>
+						<span class="mode-desc">練習用のモードです<br />簡単な平面群から出題されます</span>
 					</button>
 					<button onclick="startGame('hard')">
 						<span class="mode-title">ハード</span>
-						<span class="mode-desc">ここからが本番です</span>
+						<span class="mode-desc"
+							>ここからが本番です<br />17種類すべての平面群から出題されます</span
+						>
 					</button>
 					<button onclick="startGame('timeattack')">
 						<span class="mode-title">タイムアタック</span>
@@ -70,7 +72,7 @@
 					style="display: flex; justify-content: space-between; align-items: center"
 				>
 					<div style="display: flex; align-items: center; gap: 15px">
-						<button onclick="returnToFront()">フロント画面にもどる</button>
+						<button onclick="returnToFront()">タイトルにもどる</button>
 						<!-- モード表示用の要素を追加 -->
 						<span
 							id="current-mode-display"
@@ -83,6 +85,13 @@
 								border-radius: 15px;
 							"
 						></span>
+
+						<!-- ▼▼▼ ここに追加します ▼▼▼ -->
+						<span
+							id="problem-count-display"
+							style="font-weight: bold; font-size: 20px; margin-left: 10px"
+						></span>
+						<!-- ▲▲▲ ここまで ▲▲▲ -->
 					</div>
 					<button class="icon-btn" onclick="openTutorial()">
 						<span class="circle-icon">?</span>
@@ -347,7 +356,27 @@
 							></div>
 
 							<!-- 格子エリア -->
-							<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 20px"></canvas>
+							<!-- margin-bottom を少し減らしてボタンとの間隔を調整しています -->
+							<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 15px"></canvas>
+
+							<!-- ▼▼▼ ここにボタンを移動・再配置 ▼▼▼ -->
+							<div
+								style="
+									display: flex;
+									justify-content: space-between;
+									gap: 10px;
+									margin-bottom: 20px;
+								"
+							>
+								<button id="flip-btn" style="flex: 1; padding: 10px 5px">反転<br />(M)</button>
+								<button id="rotate-btn" style="flex: 1; padding: 10px 5px">
+									回転<br />（右クリック）
+								</button>
+								<button id="reset-btn" style="flex: 1; padding: 10px 5px">
+									配置リセット<br />(R)
+								</button>
+							</div>
+							<!-- ▲▲▲ 移動ここまで ▲▲▲ -->
 						</div>
 
 						<!-- 右側：サイドパネル -->
@@ -358,11 +387,8 @@
 									ヒントを見る
 								</button>
 
-								<button id="flip-btn">反転<br />(M)</button>
-								<button id="rotate-btn">回転<br />（右クリック）</button>
-								<button id="reset-btn" style="grid-column: 1 / -1; margin-bottom: 5px">
-									配置リセット (R)
-								</button>
+								<!-- 移動したため、ここに反転・回転・リセットボタンはありません -->
+
 								<button id="score-btn" style="grid-column: 1 / -1; margin-top: 5px">
 									採点する
 								</button>
@@ -449,6 +475,76 @@
 				</div>
 			</div>
 
+			<!-- ==================== リザルト画面 ==================== -->
+			<div id="view-result" class="view-section" style="display: none">
+				<div
+					class="game-header"
+					style="display: flex; justify-content: space-between; align-items: center"
+				>
+					<div style="display: flex; align-items: center; gap: 15px">
+						<button onclick="returnToFront()">タイトルにもどる</button>
+					</div>
+					<!-- <h2 style="margin: 0">リザルト</h2> -->
+				</div>
+				<div style="text-align: center; margin-top: 50px">
+					<div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px; color: #444">
+						ゲーム終了！
+					</div>
+					<h1
+						id="result-score-display"
+						style="font-size: 2.8em; color: #ff9800; margin-bottom: 20px"
+					></h1>
+					<p
+						id="result-detail-display"
+						style="font-size: 1.2em; color: #555; margin-bottom: 40px; line-height: 1.8"
+					></p>
+
+					<!-- ▼▼▼ 変更: スタイルをFlexboxにして横幅を広げる ▼▼▼ -->
+					<div
+						id="result-history-display"
+						style="
+							display: flex;
+							flex-wrap: wrap;
+							gap: 15px;
+							justify-content: center;
+							margin: 0 auto 30px auto;
+							max-width: 1000px;
+							padding: 20px;
+							background: #f8f9fa;
+							border-radius: 8px;
+							border: 1px solid #ddd;
+							display: none;
+						"
+					>
+						<!-- ここにJavaScriptでリストが挿入されます -->
+					</div>
+					<!-- ▲▲▲ 変更ここまで ▲▲▲ -->
+
+					<div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px">
+						<button
+							onclick="returnToFront()"
+							style="font-size: 1.2em; padding: 10px 30px; cursor: pointer"
+						>
+							タイトルに戻る
+						</button>
+						<button
+							onclick="continueGame()"
+							style="
+								font-size: 1.2em;
+								padding: 10px 30px;
+								cursor: pointer;
+								background-color: #4caf50;
+								color: white;
+								border: none;
+								border-radius: 5px;
+							"
+						>
+							ゲームを続ける
+						</button>
+					</div>
+				</div>
+			</div>
+
 			<!-- ==================== ギャラリー画面 ==================== -->
 			<div id="view-gallery" class="view-section" style="display: none">
 				<div
@@ -456,7 +552,7 @@
 					style="display: flex; justify-content: space-between; align-items: center"
 				>
 					<div style="display: flex; align-items: center; gap: 15px">
-						<button onclick="returnToFront()">フロント画面にもどる</button>
+						<button onclick="returnToFront()">タイトルにもどる</button>
 
 						<!-- ★追加：保存数の表示 -->
 						<span
@@ -520,7 +616,7 @@
 
 				<h2 style="border-bottom: none; margin-bottom: 10px">確認</h2>
 				<div class="tutorial-body">
-					<p>ゲームを中断してフロント画面に戻ってもよろしいですか？</p>
+					<p>ゲームを中断してタイトルに戻ってもよろしいですか？</p>
 
 					<div class="confirm-btn-group">
 						<button class="confirm-btn-yes" onclick="confirmReturnToFront()">はい</button>
@@ -530,6 +626,8 @@
 			</div>
 		</div>
 		<script type="module" src="main.js"></script>
+		<!-- ▼ 追加：リザルト画面用のスクリプト -->
+		<script type="module" src="result.js"></script>
 		<!-- ギャラリー保存確認・オーバーレイ（疑似ポップアップ） -->
 		<div id="save-gallery-modal" class="tutorial-overlay" style="display: none">
 			<!-- ★幅を400pxから600pxに広げる -->
