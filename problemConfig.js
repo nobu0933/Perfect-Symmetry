@@ -4,12 +4,13 @@ export const ProblemConfig = {
 	// ゲームモード
 	easy: {
 		p1: {
-			weight: 5,
+			weight: 3,
 			problems: [
 				{
 					title: 'p1の基本問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 1,
 					symbolSets: [
 						{
 							problem: [],
@@ -26,6 +27,7 @@ export const ProblemConfig = {
 					title: 'p2の基本問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 2,
 					symbolSets: [
 						{
 							problem: [1, 2, 3, 4],
@@ -54,6 +56,7 @@ export const ProblemConfig = {
 					title: 'pmの基本問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 2,
 					symbolSets: [
 						{
 							problem: [1, 2],
@@ -78,6 +81,7 @@ export const ProblemConfig = {
 					title: 'pmの基本問題',
 					explanationId: 1, // 適宜調整してください
 					difficulty: 1,
+					needCount: 2,
 					symbolSets: [
 						{
 							problem: [1, 2],
@@ -102,6 +106,7 @@ export const ProblemConfig = {
 					title: 'pgの基本問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 2,
 					symbolSets: [
 						{
 							problem: [1, 2],
@@ -126,6 +131,7 @@ export const ProblemConfig = {
 					title: 'pgの基本問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 2,
 					symbolSets: [
 						{
 							problem: [1, 2],
@@ -150,6 +156,7 @@ export const ProblemConfig = {
 					title: 'cmの基本問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 4,
 					symbolSets: [
 						{
 							problem: [1, 2, 4],
@@ -186,6 +193,7 @@ export const ProblemConfig = {
 					title: 'cmの基本問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 4,
 					symbolSets: [
 						{
 							problem: [1, 2, 4],
@@ -222,6 +230,7 @@ export const ProblemConfig = {
 					title: 'p2mmの基本問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 4,
 					symbolSets: [
 						{
 							problem: [10, 11, 12, 13, 14, 15],
@@ -306,6 +315,7 @@ export const ProblemConfig = {
 					title: 'p4の基本問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 4,
 					symbolSets: [
 						{
 							problem: [1, 2, 3, 4],
@@ -358,6 +368,7 @@ export const ProblemConfig = {
 					title: 'p3の基本問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 3,
 					symbolSets: [
 						{
 							problem: [1, 2, 3, 4],
@@ -410,6 +421,7 @@ export const ProblemConfig = {
 					title: 'p6の基本問題',
 					explanationId: 1,
 					difficulty: 3,
+					needCount: 6,
 					symbolSets: [
 						{
 							problem: [1, 2, 3, 4],
@@ -445,6 +457,7 @@ export const ProblemConfig = {
 					title: 'p1の応用問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 1,
 					symbolSets: [
 						{
 							problem: [],
@@ -461,6 +474,7 @@ export const ProblemConfig = {
 					title: 'p2の応用問題',
 					explanationId: 2,
 					difficulty: 2,
+					needCount: 2,
 					symbolSets: [
 						{
 							rand: [
@@ -487,6 +501,7 @@ export const ProblemConfig = {
 					title: 'p2の応用問題',
 					explanationId: 2,
 					difficulty: 3,
+					needCount: 2,
 					symbolSets: [
 						{
 							rand: [
@@ -508,6 +523,7 @@ export const ProblemConfig = {
 					title: 'pmの応用問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 2,
 					symbolSets: [
 						{
 							rand: [
@@ -529,6 +545,7 @@ export const ProblemConfig = {
 					title: 'pmの応用問題',
 					explanationId: 1, // 適宜調整してください
 					difficulty: 2,
+					needCount: 2,
 					symbolSets: [
 						{
 							rand: [
@@ -550,6 +567,7 @@ export const ProblemConfig = {
 					title: 'pgの応用問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 2,
 					symbolSets: [
 						{
 							rand: [
@@ -571,6 +589,7 @@ export const ProblemConfig = {
 					title: 'pgの応用問題',
 					explanationId: 1,
 					difficulty: 2,
+					needCount: 2,
 					symbolSets: [
 						{
 							rand: [
@@ -592,6 +611,7 @@ export const ProblemConfig = {
 					title: 'cmの応用問題',
 					explanationId: 1,
 					difficulty: 3,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -618,6 +638,7 @@ export const ProblemConfig = {
 					title: 'cmの応用問題',
 					explanationId: 1,
 					difficulty: 1,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -644,6 +665,7 @@ export const ProblemConfig = {
 					title: 'p2mmの応用問題',
 					explanationId: 1,
 					difficulty: 3,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -689,6 +711,7 @@ export const ProblemConfig = {
 					title: 'p2mgの応用問題',
 					explanationId: 1,
 					difficulty: 3,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -715,6 +738,7 @@ export const ProblemConfig = {
 					title: 'p2mgの応用問題',
 					explanationId: 1,
 					difficulty: 4,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -765,6 +789,7 @@ export const ProblemConfig = {
 					title: 'pggの応用問題',
 					explanationId: 1,
 					difficulty: 4,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -809,7 +834,8 @@ export const ProblemConfig = {
 				{
 					title: 'pggの応用問題',
 					explanationId: 1,
-					difficulty: 5,
+					difficulty: 7,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -841,6 +867,7 @@ export const ProblemConfig = {
 					title: 'c2mmの応用問題',
 					explanationId: 1,
 					difficulty: 6,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 頂点:1, 1/4:1, 鏡映1
@@ -973,6 +1000,7 @@ export const ProblemConfig = {
 					title: 'c2mmの応用問題',
 					explanationId: 1,
 					difficulty: 7,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 頂点:1, 1/4:1, 映進:1
@@ -1145,6 +1173,7 @@ export const ProblemConfig = {
 					title: 'c2mmの応用問題',
 					explanationId: 1,
 					difficulty: 8,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 頂点:0, 1/4:1, 映進2
@@ -1187,6 +1216,7 @@ export const ProblemConfig = {
 					title: 'p4の応用問題',
 					explanationId: 1,
 					difficulty: 3,
+					needCount: 4,
 					symbolSets: [
 						{
 							rand: [
@@ -1228,6 +1258,7 @@ export const ProblemConfig = {
 					title: 'p4mmの応用問題',
 					explanationId: 1,
 					difficulty: 7,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 4回1, 鏡映1
@@ -1260,6 +1291,7 @@ export const ProblemConfig = {
 					title: 'p4mmの応用問題',
 					explanationId: 1,
 					difficulty: 8,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 鏡面2∠
@@ -1297,6 +1329,7 @@ export const ProblemConfig = {
 					title: 'p4mmの応用問題',
 					explanationId: 1,
 					difficulty: 9,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 4回1, 映進1
@@ -1364,6 +1397,7 @@ export const ProblemConfig = {
 					title: 'p4mmの応用問題',
 					explanationId: 1,
 					difficulty: 10,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 鏡面1∠映進1
@@ -1406,6 +1440,7 @@ export const ProblemConfig = {
 					title: 'p4mgの応用問題',
 					explanationId: 1,
 					difficulty: 7,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 4回1, 鏡映1
@@ -1443,6 +1478,7 @@ export const ProblemConfig = {
 					title: 'p4mgの応用問題',
 					explanationId: 1,
 					difficulty: 9,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 4回1, 鏡映1
@@ -1480,6 +1516,7 @@ export const ProblemConfig = {
 					title: 'p4mgの応用問題',
 					explanationId: 1,
 					difficulty: 10,
+					needCount: 8,
 					symbolSets: [
 						{
 							// 鏡映∠映進
@@ -1522,6 +1559,7 @@ export const ProblemConfig = {
 					title: 'p3の応用問題',
 					explanationId: 1,
 					difficulty: 3,
+					needCount: 3,
 					symbolSets: [
 						{
 							// 頂点3回1
@@ -1564,6 +1602,7 @@ export const ProblemConfig = {
 					title: 'p3m1の応用問題',
 					explanationId: 1,
 					difficulty: 7,
+					needCount: 6,
 					symbolSets: [
 						{
 							// 3回1, 鏡映1
@@ -1666,6 +1705,7 @@ export const ProblemConfig = {
 					title: 'p31mの応用問題',
 					explanationId: 1,
 					difficulty: 7,
+					needCount: 6,
 					symbolSets: [
 						{
 							// 3回1, 鏡映1
@@ -1782,7 +1822,8 @@ export const ProblemConfig = {
 				{
 					title: 'p31mの応用問題',
 					explanationId: 1,
-					difficulty: 9,
+					difficulty: 10,
+					needCount: 6,
 					symbolSets: [
 						{
 							// 3回1, 映進1
@@ -1809,7 +1850,8 @@ export const ProblemConfig = {
 				{
 					title: 'p31mの応用問題',
 					explanationId: 1,
-					difficulty: 10,
+					difficulty: 11,
+					needCount: 6,
 					symbolSets: [
 						{
 							// 鏡映1∠映進1
@@ -1876,7 +1918,8 @@ export const ProblemConfig = {
 				{
 					title: 'p31mの応用問題',
 					explanationId: 1,
-					difficulty: 11,
+					difficulty: 12,
+					needCount: 6,
 					symbolSets: [
 						{
 							// 映進2
@@ -1939,6 +1982,7 @@ export const ProblemConfig = {
 					title: 'p6の応用問題',
 					explanationId: 1,
 					difficulty: 4,
+					needCount: 6,
 					symbolSets: [
 						{
 							rand: [
@@ -1964,7 +2008,8 @@ export const ProblemConfig = {
 				{
 					title: 'p6の応用問題',
 					explanationId: 1,
-					difficulty: 7,
+					difficulty: 9,
+					// needCount: 6,
 					symbolSets: [
 						{
 							rand: [
@@ -1995,7 +2040,8 @@ export const ProblemConfig = {
 				{
 					title: 'p6mmの応用問題',
 					explanationId: 1,
-					difficulty: 9,
+					difficulty: 11,
+					needCount: 12,
 					symbolSets: [
 						{
 							rand: [
@@ -2022,6 +2068,43 @@ export const ProblemConfig = {
 								{
 									pool: [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33],
 									pCount: 0,
+									hCount: 1,
+								},
+							],
+						},
+					],
+				},
+				{
+					title: 'p6mmの応用問題',
+					explanationId: 1,
+					difficulty: 14,
+					needCount: 12,
+					symbolSets: [
+						{
+							rand: [
+								{
+									pool: [1, 2, 3, 4],
+									pCount: 1,
+									hCount: 1,
+								},
+								{
+									pool: [5, 6],
+									pCount: 0,
+									hCount: 1,
+								},
+								{
+									pool: [7, 8, 9, 10, 11],
+									pCount: 0,
+									hCount: 1,
+								},
+								{
+									pool: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+									pCount: 0,
+									hCount: 1,
+								},
+								{
+									pool: [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33],
+									pCount: 1,
 									hCount: 1,
 								},
 							],

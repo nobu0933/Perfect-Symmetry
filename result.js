@@ -98,7 +98,7 @@ window.showTotalResult = function (cumulativeScore, solvedCount, mode, historyDa
 					const galleryData = {
 						...item.state, // 図形の配置データや平面群の名前を展開
 						score: item.score, // 履歴データから得点を付与
-						// ★ 修正: gallery.js に合わせてプロパティ名を placementsCount に変更[cite: 10, 11]
+						// ★ 修正: gallery.js に合わせてプロパティ名を placementsCount に変更
 						placementsCount:
 							item.placementsCount !== undefined
 								? item.placementsCount

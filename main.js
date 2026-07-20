@@ -406,25 +406,25 @@ function generateRandomInitialShape() {
 	// モードごとにサイズの上限・下限を設定（数値はお好みで調整してください）
 	switch (currentAppMode) {
 		case 'easy':
-			minSize = 30;
-			maxSize = 60;
+			minSize = CELL_SIZE * 0.15;
+			maxSize = CELL_SIZE * 0.3;
 			break;
 		case 'hard':
-			minSize = 30;
-			maxSize = 60;
+			minSize = CELL_SIZE * 0.15;
+			maxSize = CELL_SIZE * 0.3;
 			break;
 		case 'timeattack':
-			minSize = 50;
-			maxSize = 90;
+			minSize = CELL_SIZE * 0.25;
+			maxSize = CELL_SIZE * 0.45;
 			break;
 		case 'blind':
-			minSize = 50;
-			maxSize = 140;
+			minSize = CELL_SIZE * 0.25;
+			maxSize = CELL_SIZE * 0.7;
 			break;
 		case 'debug':
 		default:
-			minSize = 30;
-			maxSize = CELL_SIZE / 2; // デフォルト (100)
+			minSize = CELL_SIZE * 0.15;
+			maxSize = CELL_SIZE * 0.5; // デフォルト (100)
 			break;
 	}
 
@@ -963,6 +963,66 @@ function resetPlacement() {
 	if (nameEl) {
 		nameEl.textContent = currentProblemData ? currentProblemData.title : 'フリー配置';
 	}
+
+	updatePlacementCountDisplay();
+}
+
+// ==========================================
+// ★ 修正: 配置数のゲージと色を更新する関数
+// ==========================================
+function updatePlacementCountDisplay() {
+	const gaugeContainer = document.getElementById('gauge-container');
+	const gaugeFill = document.getElementById('gauge-fill');
+	const gaugeText = document.getElementById('gauge-text');
+
+	if (!gaugeContainer || !gaugeFill || !gaugeText) return;
+
+	// フリー配置などで問題データがない場合はゲージ自体を非表示
+	if (!currentProblemData) {
+		gaugeContainer.style.display = 'none';
+		return;
+	} else {
+		gaugeContainer.style.display = 'block';
+	}
+
+	// 現在の配置数
+	const currentCount = placedShapes.length;
+	// 問題データの必要数
+	const needCount = currentProblemData.needCount;
+
+	let percentage = 0;
+
+	// needCount が数値として設定されている場合
+	if (typeof needCount === 'number' && needCount > 0) {
+		// 割合を計算 (最大100%に制限)
+		percentage = (currentCount / needCount) * 100;
+		if (percentage > 100) percentage = 100;
+
+		gaugeText.textContent = `${currentCount} / ${needCount}`;
+
+		// ★ 追加: 配置数に応じてゲージの色を変更する
+		if (currentCount < needCount) {
+			// 足りないとき（青）
+			gaugeFill.style.backgroundColor = '#2196F3';
+		} else if (currentCount === needCount) {
+			// ちょうどのとき（緑）
+			gaugeFill.style.backgroundColor = '#4CAF50';
+		} else {
+			// 多いとき（赤）
+			gaugeFill.style.backgroundColor = '#F44336';
+		}
+	} else {
+		// needCount が '???' などの場合
+		gaugeText.textContent = `${currentCount} / ???`;
+		percentage = 0;
+		gaugeFill.style.backgroundColor = '#9e9e9e'; // 不明な場合はグレーなどにしておく
+	}
+
+	// ゲージの長さを反映
+	gaugeFill.style.width = `${percentage}%`;
+
+	// ★ 追加: 採点済みの場合はゲージを半透明にして色を薄くする
+	gaugeContainer.style.opacity = isScored ? '0.4' : '1.0';
 }
 
 canvas.addEventListener(
@@ -1025,6 +1085,9 @@ canvas.addEventListener('click', (e) => {
 	}
 	draw();
 	updateDebugCounters();
+
+	// ★追加: クリックして配置した時に表示を更新
+	updatePlacementCountDisplay();
 });
 
 function doScore() {
@@ -1174,6 +1237,7 @@ function doScore() {
 					shapeType: initialShape.type,
 					shapeColor: initialShape.color,
 					shapeSize: initialShape.size,
+					placementsCount: placedShapes.length, // ★追加: 配置数も保存データに含める
 					placements: JSON.parse(JSON.stringify(placedShapes)), // 配置情報をコピーして保存
 				},
 			});
@@ -1238,6 +1302,9 @@ function doScore() {
 
 	drawModelAnswer();
 	draw();
+
+	// ★ ここに追加：採点後にゲージの表示を更新して色を薄くする
+	updatePlacementCountDisplay();
 }
 
 function nextProblem() {
@@ -1278,6 +1345,9 @@ function nextProblem() {
 	// ▼▼▼ ここ（関数の最後）に追加します ▼▼▼
 	updateProblemCountDisplay();
 	// ▲▲▲ ここまで ▲▲▲
+
+	// ★ 追加: 採点後にゲージの表示を更新して色を薄くする
+	updatePlacementCountDisplay();
 }
 
 document.getElementById('flip-btn').addEventListener('click', flipShape);
@@ -1627,6 +1697,8 @@ window.startGame = function (mode) {
 	// ▼▼▼ ここに追加します ▼▼▼
 	updateProblemCountDisplay();
 	// ▲▲▲ ここまで ▲▲▲
+
+	updatePlacementCountDisplay();
 
 	if (['easy', 'hard', 'timeattack', 'blind'].includes(mode)) {
 		generateRandomProblem();
