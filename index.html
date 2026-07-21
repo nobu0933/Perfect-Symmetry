@@ -19,7 +19,7 @@
 			<!-- ==================== タイトル画面 ==================== -->
 			<div id="view-front" class="view-section">
 				<div class="title-area">
-					<h1>Perfect Symmetry <span class="version-text">beta 1.7</span></h1>
+					<h1>Perfect Symmetry <span class="version-text">beta 1.8</span></h1>
 					<p>平面群を作るゲーム</p>
 				</div>
 
@@ -90,6 +90,18 @@
 						<span
 							id="problem-count-display"
 							style="font-weight: bold; font-size: 20px; margin-left: 10px"
+						></span>
+						<!-- ▲▲▲ ここまで ▲▲▲ -->
+						<!-- ▼▼▼ ここに追加 ▼▼▼ -->
+						<span
+							id="timer-display"
+							style="
+								display: none;
+								font-weight: bold;
+								font-size: 20px;
+								margin-left: 15px;
+								color: #333;
+							"
 						></span>
 						<!-- ▲▲▲ ここまで ▲▲▲ -->
 					</div>
@@ -377,9 +389,64 @@
 								</button>
 							</div>
 
-							<!-- 格子エリア -->
-							<!-- margin-bottom を少し減らしてボタンとの間隔を調整しています -->
-							<canvas id="gameCanvas" width="600" height="600" style="margin-bottom: 15px"></canvas>
+							<!-- 格子エリアコンテナ -->
+							<!-- 格子エリアコンテナ -->
+							<div
+								id="canvas-container"
+								style="position: relative; display: inline-block; margin-bottom: 15px"
+							>
+								<!-- キャンバス本体 -->
+								<canvas id="gameCanvas" width="600" height="600" style="display: block"></canvas>
+
+								<!-- タイムアタック用スタート前オーバーレイ -->
+								<div
+									id="timeattack-start-overlay"
+									style="
+										display: none;
+										position: absolute;
+										top: 2px; /* キャンバスの上の枠線(2px)の分だけ内側にずらす */
+										left: 2px; /* キャンバスの左の枠線(2px)の分だけ内側にずらす */
+										width: 600px; /* キャンバスの中身と全く同じ幅 */
+										height: 600px; /* キャンバスの中身と全く同じ高さ */
+										background-color: #ffffff;
+										justify-content: center;
+										align-items: center;
+										z-index: 10;
+									"
+								>
+									<button
+										id="timeattack-start-btn"
+										style="
+											padding: 15px 40px;
+											font-size: 24px;
+											font-weight: bold;
+											background-color: #28a745;
+											color: white;
+											border: none;
+											border-radius: 8px;
+											cursor: pointer;
+											box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+										"
+									>
+										スタート
+									</button>
+								</div>
+
+								<!-- ★ 追加: 中断用の白カバー -->
+								<div
+									id="pause-overlay"
+									style="
+										display: none;
+										position: absolute;
+										top: 2px;
+										left: 2px;
+										width: 600px;
+										height: 600px;
+										background-color: #ffffff;
+										z-index: 9;
+									"
+								></div>
+							</div>
 
 							<!-- ▼▼▼ 前にボタンがあった ▼▼▼ -->
 							<!-- ▲▲▲ ここまで ▲▲▲ -->
@@ -609,6 +676,19 @@
 				>
 					<div style="display: flex; align-items: center; gap: 15px">
 						<button onclick="returnToFront()">タイトルにもどる</button>
+
+						<!-- ★追加: ゲーム画面と同じスタイルでモード表示を追加 -->
+						<span
+							id="result-mode-display"
+							style="
+								font-weight: bold;
+								color: #444;
+								font-size: 15px;
+								background: #e9ecef;
+								padding: 4px 12px;
+								border-radius: 15px;
+							"
+						></span>
 					</div>
 					<!-- <h2 style="margin: 0">リザルト</h2> -->
 				</div>
@@ -755,6 +835,7 @@
 		<!-- ▼ 追加：リザルト画面用のスクリプト -->
 		<script type="module" src="result.js"></script>
 		<!-- ギャラリー保存確認・オーバーレイ（疑似ポップアップ） -->
+		<script type="module" src="timeattack.js"></script>
 		<div id="save-gallery-modal" class="tutorial-overlay" style="display: none">
 			<!-- ★幅を400pxから600pxに広げる -->
 			<div class="tutorial-content" style="max-width: 600px; text-align: center">

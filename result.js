@@ -11,6 +11,7 @@ window.showTotalResult = function (cumulativeScore, solvedCount, mode, historyDa
 	const viewResult = document.getElementById('view-result');
 	if (viewResult) {
 		viewResult.style.display = 'block';
+		// ★ HTMLに直接要素を配置したため、ここにあった複雑なクローン処理は不要になり削除しました
 	}
 
 	// スコアと詳細情報の表示を更新
@@ -32,9 +33,12 @@ window.showTotalResult = function (cumulativeScore, solvedCount, mode, historyDa
 		if (modeNames[mode]) modeName = modeNames[mode];
 
 		detailDisplay.innerHTML = `
-			プレイモード: <strong>${modeName}</strong><br>
 			得点率: <strong>${accuracy}</strong> %
 		`;
+		// detailDisplay.innerHTML = `
+		// 	プレイモード: <strong>${modeName}</strong><br>
+		// 	得点率: <strong>${accuracy}</strong> %
+		// `;
 	}
 
 	// ▼▼▼ 変更: 履歴データのCanvas描画処理 ▼▼▼

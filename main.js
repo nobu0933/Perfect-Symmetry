@@ -9,8 +9,79 @@ import {
 	loadAndDisplayGallery,
 	openSaveGalleryModal,
 } from './gallery.js';
+import {
+	prepareTimeAttack,
+	startTimeAttack,
+	stopTimeAttack,
+	lockGameUIForTimeAttack,
+	unlockGameUIForTimeAttack,
+	isTimeAttackWaiting,
+	pauseTimeAttack, // ★ 追加
+	resumeTimeAttack, // ★ 追加
+} from './timeattack.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+	// タイムアタックの「スタート」ボタンイベント
+	const startBtn = document.getElementById('timeattack-start-btn');
+	const overlay = document.getElementById('timeattack-start-overlay');
+
+	if (startBtn) {
+		startBtn.addEventListener('click', () => {
+			// オーバーレイを非表示にして格子エリアを見せる
+			if (overlay) {
+				overlay.style.display = 'none';
+			}
+
+			// // タイマーカウントダウンを開始
+			// startTimeAttack(() => {
+			// 	// 制限時間切れ時の処理：今の問題の採点に進む
+			// 	isTimeAttackTimeUp = true;
+			// 	unlockGameUIForTimeAttack(); // UIロックを解除して結果・解説を表示
+			// 	doScore(); // 今の問題を採点
+
+			// 	const nextBtn = document.getElementById('next-btn');
+			// 	if (nextBtn) {
+			// 		nextBtn.textContent = 'リザルトへ';
+			// 	}
+			// });
+			// タイマーカウントダウンを開始
+			startTimeAttack(() => {
+				isTimeAttackTimeUp = true;
+
+				// 1. すでに採点済み（解説画面）かどうかを判定する
+				// （例：「採点する」ボタンが既に無効化されていれば採点済みとみなす）
+				const scoreBtn = document.getElementById('score-btn');
+				const isAlreadyScored = scoreBtn && scoreBtn.disabled === true;
+
+				// 2. まだ解答中だった場合のみ、現在の状態で強制採点する
+				if (!isAlreadyScored) {
+					doScore();
+				}
+
+				// 3. ★ 追加：ゲーム操作に関わるボタンをすべて強制的に無効化（ロック）
+				const actionButtons = [
+					'hint-action-btn',
+					'reset-btn',
+					'flip-btn',
+					'rotate-btn',
+					'score-btn',
+				];
+				actionButtons.forEach((id) => {
+					const btn = document.getElementById(id);
+					if (btn) {
+						btn.disabled = true; // ボタンを押せないようにする
+					}
+				});
+
+				// 4. 次へ進むボタンのテキストを更新
+				const nextBtn = document.getElementById('next-btn');
+				if (nextBtn) {
+					nextBtn.textContent = 'リザルトへ';
+				}
+			});
+		});
+	}
+
 	// ==========================================
 	// --- 追加：ギャラリー用の連携関数 ---
 	// ==========================================
@@ -281,6 +352,7 @@ function updateDebugCounters(scoreData = null) {
 // 1. 状態管理用のグローバル変数
 // ==========================================
 let currentAppMode = 'front'; // 現在のモード ('front', 'easy', 'normal' など)
+let isTimeAttackTimeUp = false; // ★ 追加: タイムアタックの時間切れフラグ
 let currentGroup = 'p1'; // 'p2', 'pm' など
 let currentProblemData = null; // 選択された問題のタイトルや解説情報
 let currentActiveSymbols = []; // 現在画面に表示すべき問題の記号ID配列
@@ -456,10 +528,19 @@ function updateModeDisplay(mode) {
 		blind: 'ブラインド',
 		debug: 'デバッグ',
 	};
+
+	const displayName = modeNames[mode] || mode;
+
+	// ゲーム画面のヘッダーを更新
 	const modeDisplay = document.getElementById('current-mode-display');
 	if (modeDisplay) {
-		const displayName = modeNames[mode] || mode;
 		modeDisplay.textContent = `ゲームモード：${displayName}`;
+	}
+
+	// ★追加: リザルト画面のヘッダーも同時に更新しておく
+	const resultModeDisplay = document.getElementById('result-mode-display');
+	if (resultModeDisplay) {
+		resultModeDisplay.textContent = `ゲームモード：${displayName}`;
 	}
 }
 
@@ -891,6 +972,15 @@ function draw() {
 	}
 }
 
+// キャンバスにカーソルが入った瞬間に描画状態を更新
+canvas.addEventListener('mouseenter', (e) => {
+	isMouseInCanvas = true;
+	const rect = canvas.getBoundingClientRect();
+	previewShape.x = e.clientX - rect.left;
+	previewShape.y = e.clientY - rect.top;
+	draw();
+});
+
 canvas.addEventListener('mousemove', (e) => {
 	const rect = canvas.getBoundingClientRect();
 	const mx = e.clientX - rect.left;
@@ -923,6 +1013,10 @@ canvas.addEventListener('contextmenu', (e) => {
 function flipShape() {
 	if (isScored) return;
 	previewShape.flipped = !previewShape.flipped;
+	// 手動初期配置中の場合は initialShape も同期させる
+	if (typeof isPlacingFirst !== 'undefined' && isPlacingFirst) {
+		initialShape.flipped = previewShape.flipped;
+	}
 	draw();
 }
 
@@ -930,6 +1024,10 @@ function rotateShape() {
 	if (isScored) return;
 	const angleStep = SymmetryConfig[currentGroup]?.clickAngle ?? 180;
 	previewShape.angle = (previewShape.angle + angleStep) % 360;
+	// 手動初期配置中の場合は initialShape も同期させる
+	if (typeof isPlacingFirst !== 'undefined' && isPlacingFirst) {
+		initialShape.angle = previewShape.angle;
+	}
 	draw();
 }
 
@@ -1222,8 +1320,8 @@ function doScore() {
 	isScored = true;
 	currentScore = totalScore; // ★追加: 計算されたtotalScoreをグローバル変数に格納する
 
-	// ★ 変更: MAX_PROBLEMS に設定されているモードの場合のみ加算
-	if (MAX_PROBLEMS[currentAppMode]) {
+	// ★ 変更: MAX_PROBLEMS に設定されているモード または タイムアタックの場合に加算
+	if (MAX_PROBLEMS[currentAppMode] || currentAppMode === 'timeattack') {
 		solvedCount++;
 		cumulativeScore += totalScore;
 
@@ -1272,9 +1370,12 @@ function doScore() {
 	const nextBtn = document.getElementById('next-btn');
 	nextBtn.style.display = 'block';
 
-	// ★ 変更：最大問題数に達しているか確認し、ボタンのテキストを「リザルトへ」に変更する
+	// ★ 変更：タイムアタックの場合は時間切れフラグを優先、他モードは最大問題数を基準にする
 	const targetCount = MAX_PROBLEMS[currentAppMode];
-	if (targetCount && solvedCount >= targetCount) {
+	if (currentAppMode === 'timeattack') {
+		// タイムアタックなら、時間切れのときだけ「リザルトへ」
+		nextBtn.textContent = isTimeAttackTimeUp ? 'リザルトへ' : '次の問題';
+	} else if (targetCount && solvedCount >= targetCount) {
 		nextBtn.textContent = 'リザルトへ';
 	} else {
 		nextBtn.textContent = '次の問題';
@@ -1308,13 +1409,16 @@ function doScore() {
 }
 
 function nextProblem() {
-	// ★ 変更: モードごとの設定問題数を取得し、達しているかチェック
+	// ★ 変更：タイムアタックは時間切れの場合のみ、他モードは設定問題数に達した場合にリザルトへ
 	const targetCount = MAX_PROBLEMS[currentAppMode];
 
-	if (targetCount && solvedCount >= targetCount) {
+	const isTimeAttackFinish = currentAppMode === 'timeattack' && isTimeAttackTimeUp;
+	const isNormalModeFinish =
+		currentAppMode !== 'timeattack' && targetCount && solvedCount >= targetCount;
+
+	if (isTimeAttackFinish || isNormalModeFinish) {
 		// リザルト画面の処理へ移行
 		if (typeof window.showTotalResult === 'function') {
-			// ▼▼▼ 変更：第4引数に problemHistory を追加 ▼▼▼
 			window.showTotalResult(cumulativeScore, solvedCount, currentAppMode, problemHistory);
 		}
 		return; // 次の問題は生成せずに処理を終了する
@@ -1350,8 +1454,24 @@ function nextProblem() {
 	updatePlacementCountDisplay();
 }
 
-document.getElementById('flip-btn').addEventListener('click', flipShape);
-document.getElementById('rotate-btn').addEventListener('click', rotateShape);
+// document.getElementById('flip-btn').addEventListener('click', flipShape);
+// document.getElementById('rotate-btn').addEventListener('click', rotateShape);
+// 修正後:
+const flipBtn = document.getElementById('flip-btn');
+if (flipBtn) {
+	flipBtn.addEventListener('pointerdown', (e) => {
+		e.preventDefault(); // ドラッグ選択や後続のclick発火を防止
+		flipShape();
+	});
+}
+
+const rotateBtn = document.getElementById('rotate-btn');
+if (rotateBtn) {
+	rotateBtn.addEventListener('pointerdown', (e) => {
+		e.preventDefault(); // ドラッグ選択や後続のclick発火を防止
+		rotateShape();
+	});
+}
 document.getElementById('reset-btn').addEventListener('click', resetPlacement);
 document.getElementById('score-btn').addEventListener('click', doScore);
 document.getElementById('next-btn').addEventListener('click', nextProblem);
@@ -1368,16 +1488,38 @@ document.getElementById('answerCanvas').addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (e) => {
+	// ★ 追加: 各種モーダル、オーバーレイ、リザルト画面が表示されている時はブロック
+	const confirmModal = document.getElementById('return-confirm-modal');
+	if (confirmModal && confirmModal.style.display === 'flex') return;
+
+	const tutorialModal = document.getElementById('tutorial-modal');
+	if (tutorialModal && tutorialModal.style.display === 'flex') return;
+
+	const taOverlay = document.getElementById('timeattack-start-overlay');
+	if (taOverlay && taOverlay.style.display === 'flex') return;
+
+	const viewResult = document.getElementById('view-result');
+	if (viewResult && viewResult.style.display === 'block') return;
+
+	// ★ 変更: 各アクションに対応するボタンがロック（disabled）されていないか確認して実行する
 	if (e.key === 'm' || e.key === 'M') {
-		flipShape();
+		const flipBtn = document.getElementById('flip-btn');
+		if (flipBtn && !flipBtn.disabled) {
+			flipShape();
+		}
 	} else if (e.key === 'r' || e.key === 'R') {
-		if (!isScored) {
+		const resetBtn = document.getElementById('reset-btn');
+		if (resetBtn && !resetBtn.disabled && !isScored) {
 			resetPlacement();
 		}
 	} else if (e.key === 'Enter') {
 		if (!isScored) {
-			doScore();
+			const scoreBtn = document.getElementById('score-btn');
+			if (scoreBtn && !scoreBtn.disabled) {
+				doScore();
+			}
 		} else {
+			// 採点後はEnterキーで「次の問題」へ
 			nextProblem();
 		}
 	}
@@ -1683,10 +1825,14 @@ function syncDebugPanel() {
 window.startGame = function (mode) {
 	currentAppMode = mode;
 
-	// ★ 追加: ゲーム開始時にカウントと合計スコアをリセット
-	solvedCount = 0;
-	cumulativeScore = 0;
-	problemHistory = []; // ★追加: 新しいゲームを始める時に履歴を空にする
+	// ==========================================
+	// ★ 修正・追加：前回のプレイデータを確実にすべてリセット
+	// ==========================================
+	isTimeAttackTimeUp = false; // タイムアタックの時間切れフラグ
+	solvedCount = 0; // 解答済みの問題数
+	cumulativeScore = 0; // 合計スコア
+	problemHistory = []; // 出題・解答の履歴（これも空にしないと履歴が蓄積します）
+	// ==========================================
 
 	// ★ 追加: 新たにゲームを開始するタイミングで、ヒント状態やボタンの有効化を完全に初期化する
 	clearHintState();
@@ -1700,10 +1846,34 @@ window.startGame = function (mode) {
 
 	updatePlacementCountDisplay();
 
+	const overlay = document.getElementById('timeattack-start-overlay');
+
 	if (['easy', 'hard', 'timeattack', 'blind'].includes(mode)) {
+		if (mode === 'timeattack') {
+			// タイムアタックモード初期化（タイマーは動かさない）
+			prepareTimeAttack();
+
+			// 格子エリアを覆う白背景と「スタート」ボタンを表示
+			if (overlay) {
+				overlay.style.display = 'flex';
+			}
+		} else {
+			// 他のモードの場合はオーバーレイを非表示
+			if (overlay) {
+				overlay.style.display = 'none';
+			}
+		}
+
 		generateRandomProblem();
 		initialShape = generateRandomInitialShape();
 	}
+
+	// ▼▼▼ 削除＆修正: 勝手にタイマーを開始させない ▼▼▼
+	if (mode !== 'timeattack') {
+		stopTimeAttack(); // 別のモードの場合はタイマーを停止
+		unlockGameUIForTimeAttack(); // ★ 追加: タイムアタック以外のモード用にUIロックを確実に解除する
+	}
+	// ▲▲▲ 修正ここまで ▲▲▲
 
 	document.getElementById('view-front').style.display = 'none';
 	document.getElementById('view-gallery').style.display = 'none';
@@ -1718,7 +1888,14 @@ window.startGame = function (mode) {
 		syncDebugPanel();
 	}
 
-	if (typeof resetPlacement === 'function') resetPlacement();
+	// resetPlacement() によって resetUI() が走り、ボタンが有効化されてしまうため、
+	// タイムアタックの待機中であれば、再度ロックをかけ直す
+	if (typeof resetPlacement === 'function') {
+		resetPlacement();
+		if (mode === 'timeattack' && isTimeAttackWaiting) {
+			lockGameUIForTimeAttack();
+		}
+	}
 };
 
 // リザルト画面から同じモードで再スタートする処理
@@ -1753,21 +1930,19 @@ window.returnToFront = function () {
 	if (currentAppMode === 'gallery' || currentAppMode === 'debug') {
 		executeReturnToFront();
 	} else {
-		// リザルト画面が表示されているかを判定
 		const viewResult = document.getElementById('view-result');
 		const isResultScreen = viewResult && viewResult.style.display === 'block';
 
-		// リザルト画面からの遷移の場合のみ確認ダイアログを出す
 		if (isResultScreen) {
 			executeReturnToFront();
-			// 画面の切り替え処理（既存の処理）
-			// document.getElementById('view-game').style.display = 'none';
-			// document.getElementById('view-gallery').style.display = 'none';
 			if (viewResult) viewResult.style.display = 'none';
-
-			// document.getElementById('view-front').style.display = 'block';
 		} else {
 			document.getElementById('return-confirm-modal').style.display = 'flex';
+
+			// ★ 変更: スタート後にポップアップが出た場合は「一時停止」を実行する
+			if (currentAppMode === 'timeattack' && !isTimeAttackWaiting) {
+				pauseTimeAttack();
+			}
 		}
 	}
 };
@@ -1779,10 +1954,16 @@ window.confirmReturnToFront = function () {
 
 window.closeReturnConfirm = function () {
 	document.getElementById('return-confirm-modal').style.display = 'none';
+
+	// ★ 変更: キャンセルしてゲームに戻る際、スタート済みであれば「再開」を実行する
+	if (currentAppMode === 'timeattack' && !isTimeAttackWaiting) {
+		resumeTimeAttack();
+	}
 };
 
 function executeReturnToFront() {
 	currentAppMode = 'front';
+	stopTimeAttack(); //
 	document.getElementById('view-front').style.display = 'block';
 	document.getElementById('view-game').style.display = 'none';
 	document.getElementById('view-gallery').style.display = 'none';
