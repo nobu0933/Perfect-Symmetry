@@ -293,16 +293,37 @@ let isMouseInCanvas = false;
 let previewShape = { x: 0, y: 0, angle: 0, flipped: false };
 let placedShapes = [];
 
+// --- 変更箇所 1：変数宣言部分 (215行目付近) ---
 let isScored = false;
 let currentScore = 0; // ★追加: 現在の得点を保持する変数
 export let solvedCount = 0; // 採点した問題数
-export let cumulativeScore = 0; // 5問の合計得点
+export let cumulativeScore = 0; // 難易度ボーナス込みの合計得点(finalScoreの合計)
+export let cumulativeTotalScore = 0; // ★追加: 100点満点ベースの合計得点(totalScoreの合計)
 export let problemHistory = []; // ★追加: 解いた問題の履歴を保存する配列
 export const MAX_PROBLEMS = {
 	easy: 5,
 	hard: 5,
 	// timeattack:
 	blind: 5,
+};
+
+// ★追加: difficultyごとの最大スコアを手動で設定するマップ
+export const DIFFICULTY_SCORE_MAP = {
+	1: 50,
+	2: 100,
+	3: 150,
+	4: 200,
+	5: 250,
+	6: 300,
+	7: 400,
+	8: 450,
+	9: 500,
+	10: 550,
+	11: 650,
+	12: 750,
+	13: 900,
+	14: 1100,
+	15: 1350,
 };
 
 function updateProblemCountDisplay() {
@@ -1317,26 +1338,36 @@ function doScore() {
 	}
 
 	totalScore = Math.max(0, Math.min(100, Math.round(totalScore)));
+
+	// ★ 追加: difficultyごとの最大スコアを取得し、実際の獲得スコアを計算
+	let maxScoreForDifficulty = 100;
+	if (currentProblemData && currentProblemData.difficulty) {
+		maxScoreForDifficulty = DIFFICULTY_SCORE_MAP[currentProblemData.difficulty] || 100;
+	}
+	const finalScore = Math.round(totalScore * maxScoreForDifficulty);
+
 	isScored = true;
-	currentScore = totalScore; // ★追加: 計算されたtotalScoreをグローバル変数に格納する
+	currentScore = totalScore; // ★変更: ゲーム画面表示やギャラリー保存には 100点満点の totalScore を使用
 
 	// ★ 変更: MAX_PROBLEMS に設定されているモード または タイムアタックの場合に加算
 	if (MAX_PROBLEMS[currentAppMode] || currentAppMode === 'timeattack') {
 		solvedCount++;
-		cumulativeScore += totalScore;
+		cumulativeScore += finalScore; // ★変更: リザルトで表示する総合得点としては finalScore を加算
+		cumulativeTotalScore += totalScore; // ★追加: 100点満点ベースの総合得点を加算
 
 		// ▼▼▼ 変更：解いた問題の情報と「図形の状態」を履歴に保存 ▼▼▼
 		if (currentProblemData) {
 			problemHistory.push({
 				title: currentProblemData.title || currentGroup,
-				score: currentScore,
+				score: totalScore, // ★変更: リザルトの個別作品表示用 (100点満点)
+				finalScore: finalScore, // ★追加: リザルト画面で難易度補正分の加算を別途表示するために保持
 				state: {
 					symmetryGroup: currentGroup,
 					shapeType: initialShape.type,
 					shapeColor: initialShape.color,
 					shapeSize: initialShape.size,
-					placementsCount: placedShapes.length, // ★追加: 配置数も保存データに含める
-					placements: JSON.parse(JSON.stringify(placedShapes)), // 配置情報をコピーして保存
+					placementsCount: placedShapes.length,
+					placements: JSON.parse(JSON.stringify(placedShapes)),
 				},
 			});
 		}
@@ -1355,25 +1386,22 @@ function doScore() {
 	document.getElementById('rotate-btn').disabled = true;
 	document.getElementById('reset-btn').disabled = true;
 	document.getElementById('hint-action-btn').disabled = true;
-	// ★変更: 採点後はキャンバスをクリックできることを明示するため、cursorとtitleを変更する
+
 	canvas.style.cursor = 'pointer';
 	canvas.title = '対称性を表示';
-	// ★追加: 模範解答キャンバスにも同様の効果を適用
+
 	const aCanvas = document.getElementById('answerCanvas');
 	if (aCanvas) {
 		aCanvas.style.cursor = 'pointer';
 		aCanvas.title = '対称性を表示';
 	}
 	document.getElementById('result-area').style.display = 'block';
-	document.getElementById('result-area').style.display = 'block';
 
 	const nextBtn = document.getElementById('next-btn');
 	nextBtn.style.display = 'block';
 
-	// ★ 変更：タイムアタックの場合は時間切れフラグを優先、他モードは最大問題数を基準にする
 	const targetCount = MAX_PROBLEMS[currentAppMode];
 	if (currentAppMode === 'timeattack') {
-		// タイムアタックなら、時間切れのときだけ「リザルトへ」
 		nextBtn.textContent = isTimeAttackTimeUp ? 'リザルトへ' : '次の問題';
 	} else if (targetCount && solvedCount >= targetCount) {
 		nextBtn.textContent = 'リザルトへ';
@@ -1384,9 +1412,10 @@ function doScore() {
 	const scoreDisplay = document.getElementById('score-display');
 	const adviceDisplay = document.getElementById('advice-display');
 
+	// ★変更: ゲーム画面上に表示する点数を totalScore (100点満点) に戻す
 	if (totalScore === 100) {
 		scoreDisplay.style.color = '#28a745';
-		scoreDisplay.textContent = '🎉 100点 Perfect!';
+		scoreDisplay.textContent = `🎉 ${totalScore}点 Perfect!`;
 		adviceDisplay.style.display = 'block';
 		adviceDisplay.textContent = '完璧です！';
 	} else if (totalScore >= 90) {
@@ -1419,7 +1448,14 @@ function nextProblem() {
 	if (isTimeAttackFinish || isNormalModeFinish) {
 		// リザルト画面の処理へ移行
 		if (typeof window.showTotalResult === 'function') {
-			window.showTotalResult(cumulativeScore, solvedCount, currentAppMode, problemHistory);
+			// ★変更: 第5引数に cumulativeTotalScore を渡す
+			window.showTotalResult(
+				cumulativeScore,
+				solvedCount,
+				currentAppMode,
+				problemHistory,
+				cumulativeTotalScore,
+			);
 		}
 		return; // 次の問題は生成せずに処理を終了する
 	}
@@ -1831,6 +1867,7 @@ window.startGame = function (mode) {
 	isTimeAttackTimeUp = false; // タイムアタックの時間切れフラグ
 	solvedCount = 0; // 解答済みの問題数
 	cumulativeScore = 0; // 合計スコア
+	cumulativeTotalScore = 0; // ★追加: 100点満点ベースの合計スコアもリセット
 	problemHistory = []; // 出題・解答の履歴（これも空にしないと履歴が蓄積します）
 	// ==========================================
 

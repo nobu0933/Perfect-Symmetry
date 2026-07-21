@@ -1,7 +1,15 @@
 // result.js
 import { openSaveGalleryModal } from './gallery.js'; // ★ 追加: モーダルを開く関数をインポート
 
-window.showTotalResult = function (cumulativeScore, solvedCount, mode, historyData = []) {
+// --- 変更箇所：関数の引数とスコア表示部分 (3行目付近) ---
+// ★ 第5引数に cumulativeTotalScore を追加
+window.showTotalResult = function (
+	cumulativeScore,
+	solvedCount,
+	mode,
+	historyData = [],
+	cumulativeTotalScore = 0,
+) {
 	// 他の画面をすべて非表示にする
 	document.getElementById('view-front').style.display = 'none';
 	document.getElementById('view-game').style.display = 'none';
@@ -11,38 +19,50 @@ window.showTotalResult = function (cumulativeScore, solvedCount, mode, historyDa
 	const viewResult = document.getElementById('view-result');
 	if (viewResult) {
 		viewResult.style.display = 'block';
-		// ★ HTMLに直接要素を配置したため、ここにあった複雑なクローン処理は不要になり削除しました
 	}
 
 	// スコアと詳細情報の表示を更新
 	const scoreDisplay = document.getElementById('result-score-display');
 	const detailDisplay = document.getElementById('result-detail-display');
-	const maxScore = solvedCount * 100;
+	const maxScore = solvedCount * 100; // 1問100点満点の場合の最大得点
 
-	if (scoreDisplay) scoreDisplay.textContent = `${cumulativeScore} / ${maxScore}`;
+	if (mode === 'timeattack') {
+		// タイムアタックモードの場合
+		if (scoreDisplay) {
+			scoreDisplay.textContent = `Score : ${cumulativeScore} pt`;
+			scoreDisplay.style.color = '#28a745'; // 色指定をリセット
+		}
+		if (detailDisplay) detailDisplay.innerHTML = ''; // 得点率は不要なため空にする
+	} else {
+		const accuracy = maxScore > 0 ? Math.round((cumulativeTotalScore / maxScore) * 100) : 0;
 
-	if (detailDisplay) {
-		const accuracy = maxScore > 0 ? Math.round((cumulativeScore / maxScore) * 100) : 0;
-		let modeName = mode;
-		const modeNames = {
-			easy: 'イージー',
-			hard: 'ハード',
-			timeattack: 'タイムアタック',
-			blind: 'ブラインド',
-		};
-		if (modeNames[mode]) modeName = modeNames[mode];
+		if (scoreDisplay) {
+			// 得点率に応じた文字色の変更
+			if (cumulativeTotalScore == maxScore) {
+				scoreDisplay.textContent = `🎉 ${cumulativeTotalScore} / ${maxScore} Perfect!`;
+				scoreDisplay.style.color = '#28a745'; // 緑 (90%超)
+			} else if (accuracy > 90) {
+				scoreDisplay.textContent = `${cumulativeTotalScore} / ${maxScore}`;
+				scoreDisplay.style.color = '#28a745'; // 緑 (90%超)
+			} else if (accuracy > 0) {
+				scoreDisplay.textContent = `${cumulativeTotalScore} / ${maxScore}`;
+				scoreDisplay.style.color = '#ff9800'; // オレンジ (90%以下)
+			} else {
+				scoreDisplay.textContent = `${cumulativeTotalScore} / ${maxScore}`;
+				scoreDisplay.style.color = '#d9534f'; // 赤 (0%)
+			}
+		}
 
-		detailDisplay.innerHTML = `
-			得点率: <strong>${accuracy}</strong> %
-		`;
-		// detailDisplay.innerHTML = `
-		// 	プレイモード: <strong>${modeName}</strong><br>
-		// 	得点率: <strong>${accuracy}</strong> %
-		// `;
+		if (detailDisplay) {
+			detailDisplay.innerHTML = `
+				得点率: <strong>${accuracy}</strong> %
+			`;
+		}
 	}
 
 	// ▼▼▼ 変更: 履歴データのCanvas描画処理 ▼▼▼
 	const historyDisplay = document.getElementById('result-history-display');
+
 	if (historyDisplay) {
 		historyDisplay.innerHTML = ''; // 中身を一度リセット
 
@@ -82,6 +102,17 @@ window.showTotalResult = function (cumulativeScore, solvedCount, mode, historyDa
 				wrapper.appendChild(canvas);
 				wrapper.appendChild(titleEl);
 				wrapper.appendChild(scoreEl);
+
+				// ▼▼▼ ここから追加: タイムアタックの場合のみ finalScore も表示 ▼▼▼
+				if (mode === 'timeattack' && item.finalScore !== undefined) {
+					const finalScoreEl = document.createElement('div');
+					finalScoreEl.style.fontSize = '0.85em';
+					finalScoreEl.style.color = '#555';
+					finalScoreEl.style.marginTop = '2px';
+					finalScoreEl.textContent = `${item.finalScore} pt`; // 括弧書きなどで表示
+					wrapper.appendChild(finalScoreEl);
+				}
+				// ▲▲▲ ここまで追加 ▲▲▲
 
 				// ▼▼▼ ここから追加: 保存用のカメラボタンを生成 ▼▼▼
 				const saveResultBtn = document.createElement('button');

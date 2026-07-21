@@ -1,7 +1,7 @@
 // timeattack.js
 let timeAttackInterval = null;
 let remainingTime = 60; // 1分 (60秒)
-let timelimit = 5;
+let timelimit = 60;
 
 // ★ スタート待機中かどうかを判定するフラグ
 export let isTimeAttackWaiting = false;
