@@ -290,6 +290,8 @@ const OFFSET_X = 200;
 const OFFSET_Y = 200;
 
 let isMouseInCanvas = false;
+let rawMouseX = 0; // ★ 追加: 実際のマウスX座標
+let rawMouseY = 0; // ★ 追加: 実際のマウスY座標
 let previewShape = { x: 0, y: 0, angle: 0, flipped: false };
 let placedShapes = [];
 
@@ -503,8 +505,8 @@ function generateRandomInitialShape() {
 			maxSize = CELL_SIZE * 0.3;
 			break;
 		case 'hard':
-			minSize = CELL_SIZE * 0.15;
-			maxSize = CELL_SIZE * 0.3;
+			minSize = CELL_SIZE * 0.2;
+			maxSize = CELL_SIZE * 0.4;
 			break;
 		case 'timeattack':
 			minSize = CELL_SIZE * 0.25;
@@ -587,12 +589,17 @@ function getHints() {
 }
 
 // ヒントのチェックボックスが変更されたら再描画
-['hint-toggle', 'show-problem-toggle'].forEach((id) => {
+// ★変更: 'assist-toggle' を配列に追加
+['hint-toggle', 'show-problem-toggle', 'assist-toggle'].forEach((id) => {
 	const el = document.getElementById(id);
 	if (el) {
 		el.addEventListener('change', (e) => {
 			if (id === 'hint-toggle') {
 				isHintMode = e.target.checked;
+			}
+			if (id === 'assist-toggle') {
+				// ★追加
+				updatePreviewShapePosition(); // ★追加
 			}
 			draw();
 			if (isScored) {
@@ -631,9 +638,19 @@ function wrapHex(x, y, OFFSET_X, OFFSET_Y, CELL_SIZE) {
 function resetUI() {
 	isScored = false;
 	currentScore = 0; // ★追加: リセット時に0に戻す
-	document.getElementById('score-btn').disabled = false;
-	document.getElementById('flip-btn').disabled = false;
-	document.getElementById('rotate-btn').disabled = false;
+	// ▼▼▼ 変更: 無効化の解除と一緒に、非表示も解除して元に戻す ▼▼▼
+	const scoreBtn = document.getElementById('score-btn');
+	scoreBtn.disabled = false;
+	scoreBtn.style.display = ''; // デフォルトに戻す
+
+	const flipBtn = document.getElementById('flip-btn');
+	flipBtn.disabled = false;
+	flipBtn.style.display = 'flex'; // 元のflexに戻す
+
+	const rotateBtn = document.getElementById('rotate-btn');
+	rotateBtn.disabled = false;
+	rotateBtn.style.display = 'flex'; // 元のflexに戻す
+	// ▲▲▲ 変更ここまで ▲▲▲
 	document.getElementById('reset-btn').disabled = false;
 	canvas.style.cursor = 'none';
 	canvas.title = ''; // ★追加: ツールチップの文字をリセットして非表示にする
@@ -954,7 +971,16 @@ function draw() {
 
 	// 1. 先に配置した図形を描画する
 	placedShapes.forEach((shape) => {
-		drawInAllCells(shape.x, shape.y, shape.angle, shape.flipped, 1.0);
+		// ★ 変更: ブラインドモードで未採点の場合のみ、個別の透明度を適用する
+		let drawAlpha = 1.0;
+		if (currentAppMode === 'blind' && !isScored && !shape.isInitial) {
+			drawAlpha = shape.alpha !== undefined ? shape.alpha : 1.0;
+		}
+
+		// 透明度が0より大きい（完全に見えなくなっていない）場合のみ描画
+		if (drawAlpha > 0) {
+			drawInAllCells(shape.x, shape.y, shape.angle, shape.flipped, drawAlpha);
+		}
 	});
 
 	// 2. その上から対称記号を描画する
@@ -993,12 +1019,116 @@ function draw() {
 	}
 }
 
+// ==========================================
+// ★ 追加: ブラインドモード用のフェードアウト処理
+// ==========================================
+let fadeAnimationId = null;
+
+function animateFade() {
+	let needsRedraw = false;
+	const now = performance.now();
+
+	placedShapes.forEach((shape) => {
+		// ブラインドモード中、かつ未採点、かつ初期図形以外の場合のみフェード処理
+		if (currentAppMode === 'blind' && !isScored && !shape.isInitial) {
+			if (shape.placedTime) {
+				const elapsed = now - shape.placedTime;
+				const duration = 500; // フェードアウトにかける時間（ms）
+
+				// 経過時間に応じて透明度を 1.0 から 0.0 に下げる
+				shape.alpha = Math.max(0, 1.0 - elapsed / duration);
+
+				// まだ完全に消えていない図形がある場合は再描画を継続
+				if (shape.alpha > 0) {
+					needsRedraw = true;
+				}
+			}
+		}
+	});
+
+	if (needsRedraw) {
+		draw();
+		fadeAnimationId = requestAnimationFrame(animateFade);
+	} else {
+		fadeAnimationId = null;
+		draw(); // すべて完全に透明になった状態を最後に描画してループ終了
+	}
+}
+
+// ==========================================
+// ★ 追加: スナップ処理を含むプレビュー座標の更新
+// ==========================================
+function updatePreviewShapePosition() {
+	previewShape.x = rawMouseX;
+	previewShape.y = rawMouseY;
+
+	const assistToggle = document.getElementById('assist-toggle');
+	// アシストがON、手動初期配置中ではない、かつフリー配置(p1)ではない場合のみスナップ処理
+	if (assistToggle && assistToggle.checked && !isPlacingFirst && currentGroup !== 'p1') {
+		const config = SymmetryConfig[currentGroup];
+		const isHexagonal = config && config.system === 'hexagonal';
+		const corrects = getCorrectShapes();
+		const targets = corrects.filter((c) => !c.isInitial); // 初期図形はスナップ対象外
+
+		let minDistance = CELL_SIZE * 0.075; // スナップが発動する距離の閾値(200px*倍率)
+		let snapX = rawMouseX;
+		let snapY = rawMouseY;
+
+		targets.forEach((target) => {
+			// 回転と反転が一致しているか判定
+			const angleDiff = Math.abs(previewShape.angle - target.angle) % 360;
+			const isAngleCorrect = angleDiff < 5 || angleDiff > 355;
+			const isFlipCorrect = previewShape.flipped === target.flipped;
+
+			if (isAngleCorrect && isFlipCorrect) {
+				let dist = Infinity;
+				let closestDx = 0;
+				let closestDy = 0;
+
+				// 周期性を考慮した距離の計算（採点ロジックと同じ仕組み）
+				if (isHexagonal) {
+					const L = CELL_SIZE;
+					const H_tri = (L * Math.sqrt(3)) / 2;
+					const dx = rawMouseX - target.x;
+					const dy = rawMouseY - target.y;
+
+					const dv = dy / H_tri;
+					const du = (dx - dv * (L / 2)) / L;
+
+					const wrapU = du - Math.round(du);
+					const wrapV = dv - Math.round(dv);
+
+					closestDx = wrapU * L + wrapV * (L / 2);
+					closestDy = wrapV * H_tri;
+
+					dist = Math.hypot(closestDx, closestDy);
+				} else {
+					const dx = rawMouseX - target.x;
+					const dy = rawMouseY - target.y;
+					closestDx = dx - Math.round(dx / CELL_SIZE) * CELL_SIZE;
+					closestDy = dy - Math.round(dy / CELL_SIZE) * CELL_SIZE;
+					dist = Math.hypot(closestDx, closestDy);
+				}
+
+				if (dist < minDistance) {
+					minDistance = dist;
+					snapX = rawMouseX - closestDx;
+					snapY = rawMouseY - closestDy;
+				}
+			}
+		});
+		previewShape.x = snapX;
+		previewShape.y = snapY;
+	}
+}
+
 // キャンバスにカーソルが入った瞬間に描画状態を更新
 canvas.addEventListener('mouseenter', (e) => {
 	isMouseInCanvas = true;
 	const rect = canvas.getBoundingClientRect();
-	previewShape.x = e.clientX - rect.left;
-	previewShape.y = e.clientY - rect.top;
+	rawMouseX = e.clientX - rect.left; // ★変更
+	rawMouseY = e.clientY - rect.top; // ★変更
+	updatePreviewShapePosition(); // ★追加
 	draw();
 });
 
@@ -1009,8 +1139,9 @@ canvas.addEventListener('mousemove', (e) => {
 
 	if (mx >= 0 && mx <= canvas.width && my >= 0 && my <= canvas.height) {
 		isMouseInCanvas = true;
-		previewShape.x = mx;
-		previewShape.y = my;
+		rawMouseX = mx; // ★変更
+		rawMouseY = my; // ★変更
+		updatePreviewShapePosition(); // ★追加
 	} else {
 		isMouseInCanvas = false;
 	}
@@ -1028,6 +1159,7 @@ canvas.addEventListener('contextmenu', (e) => {
 
 	const angleStep = SymmetryConfig[currentGroup]?.clickAngle ?? 180;
 	previewShape.angle = (previewShape.angle + angleStep) % 360;
+	updatePreviewShapePosition(); // ★追加
 	draw();
 });
 
@@ -1038,6 +1170,7 @@ function flipShape() {
 	if (typeof isPlacingFirst !== 'undefined' && isPlacingFirst) {
 		initialShape.flipped = previewShape.flipped;
 	}
+	updatePreviewShapePosition(); // ★追加
 	draw();
 }
 
@@ -1049,6 +1182,7 @@ function rotateShape() {
 	if (typeof isPlacingFirst !== 'undefined' && isPlacingFirst) {
 		initialShape.angle = previewShape.angle;
 	}
+	updatePreviewShapePosition(); // ★追加
 	draw();
 }
 
@@ -1194,13 +1328,23 @@ canvas.addEventListener('click', (e) => {
 		placedShapes = [{ ...initialShape }];
 		isPlacingFirst = false;
 	} else {
+		// ★ 変更: 配置時刻(placedTime)と初期透明度(alpha)を追加して保存
 		placedShapes.push({
 			x: previewShape.x,
 			y: previewShape.y,
 			angle: previewShape.angle,
 			flipped: previewShape.flipped,
 			isInitial: false,
+			placedTime: performance.now(),
+			alpha: 1.0,
 		});
+
+		// ★ 追加: ブラインドモードならフェードアニメーションを開始
+		if (currentAppMode === 'blind') {
+			if (!fadeAnimationId) {
+				fadeAnimationId = requestAnimationFrame(animateFade);
+			}
+		}
 	}
 	draw();
 	updateDebugCounters();
@@ -1381,9 +1525,19 @@ function doScore() {
 		transformPenalty,
 	});
 
-	document.getElementById('score-btn').disabled = true;
-	document.getElementById('flip-btn').disabled = true;
-	document.getElementById('rotate-btn').disabled = true;
+	// ▼▼▼ 変更: ボタンの無効化だけでなく非表示にする ▼▼▼
+	const scoreBtn = document.getElementById('score-btn');
+	scoreBtn.disabled = true;
+	scoreBtn.style.display = 'none';
+
+	const flipBtn = document.getElementById('flip-btn');
+	flipBtn.disabled = true;
+	flipBtn.style.display = 'none';
+
+	const rotateBtn = document.getElementById('rotate-btn');
+	rotateBtn.disabled = true;
+	rotateBtn.style.display = 'none';
+	// ▲▲▲ 変更ここまで ▲▲▲
 	document.getElementById('reset-btn').disabled = true;
 	document.getElementById('hint-action-btn').disabled = true;
 
@@ -1415,7 +1569,7 @@ function doScore() {
 	// ★変更: ゲーム画面上に表示する点数を totalScore (100点満点) に戻す
 	if (totalScore === 100) {
 		scoreDisplay.style.color = '#28a745';
-		scoreDisplay.textContent = `🎉 ${totalScore}点 Perfect!`;
+		scoreDisplay.textContent = `${totalScore}点 Perfect!`;
 		adviceDisplay.style.display = 'block';
 		adviceDisplay.textContent = '完璧です！';
 	} else if (totalScore >= 90) {

@@ -39,7 +39,7 @@ window.showTotalResult = function (
 		if (scoreDisplay) {
 			// 得点率に応じた文字色の変更
 			if (cumulativeTotalScore == maxScore) {
-				scoreDisplay.textContent = `🎉 ${cumulativeTotalScore} / ${maxScore} Perfect!`;
+				scoreDisplay.textContent = `${cumulativeTotalScore} / ${maxScore} Perfect!`;
 				scoreDisplay.style.color = '#28a745'; // 緑 (90%超)
 			} else if (accuracy > 90) {
 				scoreDisplay.textContent = `${cumulativeTotalScore} / ${maxScore}`;
